@@ -18,6 +18,10 @@ export interface Shop {
   website?: string;
   phone?: string;
   hours: string[];
+  /** true = open now, false = closed now, undefined = unknown */
+  isOpenNow?: boolean;
+  /** UTC offset in minutes for the shop's local timezone (from Google Places) */
+  utcOffsetMinutes?: number;
   distanceMiles?: number;
   tags: string[];
   priceLevel?: PriceLevel;

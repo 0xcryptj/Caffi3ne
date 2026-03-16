@@ -5,9 +5,34 @@ import { getNearbyCoffeeShops } from "@/lib/services/places";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const lat = Number(searchParams.get("lat") ?? "32.7765");
-  const lng = Number(searchParams.get("lng") ?? "-79.9311");
-  const radius = Number(searchParams.get("radius") ?? "10000");
+  const latStr = searchParams.get("lat");
+  const lngStr = searchParams.get("lng");
+  const radiusStr = searchParams.get("radius");
+
+  if (!latStr || !lngStr) {
+    return NextResponse.json(
+      { error: "lat and lng query parameters are required" },
+      { status: 400 }
+    );
+  }
+
+  const lat = Number(latStr);
+  const lng = Number(lngStr);
+  const radius = Number(radiusStr ?? "1000");
+
+  if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return NextResponse.json(
+      { error: "Invalid coordinates" },
+      { status: 400 }
+    );
+  }
+
+  if (isNaN(radius) || radius <= 0 || radius > 50000) {
+    return NextResponse.json(
+      { error: "radius must be between 1 and 50000 metres" },
+      { status: 400 }
+    );
+  }
 
   const shops = await getNearbyCoffeeShops({ lat, lng, radius });
   const data = await Promise.all(

@@ -17,8 +17,8 @@ interface NearbyDashboardProps {
   initialShops: ShopWithInsight[];
 }
 
-// Charleston, SC — overridden by geolocation or zip search
-const DEFAULT_COORDS = { lat: 32.7765, lng: -79.9311 };
+// Charleston fallback — only used when the browser explicitly denies geolocation
+const CHARLESTON_FALLBACK = { lat: 32.7765, lng: -79.9311 };
 
 type LocationMode = "gps" | "zip";
 
@@ -32,10 +32,12 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [zipInput, setZipInput] = useState("");
   const [zipLoading, setZipLoading] = useState(false);
 
-  // Refs so async callbacks always see latest values without re-subscribing
-  const coordsRef = useRef(DEFAULT_COORDS);
+  // Confirmed coords — null until a real location is resolved (GPS or ZIP)
+  const coordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const radiusRef = useRef(0);
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True once we have confirmed coordinates (prevents slider from firing with stale/null coords)
+  const locationReadyRef = useRef(false);
 
   const doFetch = useCallback(async (lat: number, lng: number, miles: number) => {
     if (miles === 0) { setShops([]); return; }
@@ -43,6 +45,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     try {
       const meters = Math.round(miles * 1609.34);
       const res = await fetch(`/api/shops/nearby?lat=${lat}&lng=${lng}&radius=${meters}`);
+      if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = (await res.json()) as { data: ShopWithInsight[] };
       setShops(data.data ?? []);
     } catch {
@@ -52,11 +55,25 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     }
   }, []);
 
-  // Geolocation fires on mount and when switching back to GPS mode
+  const fetchWeather = useCallback((lat: number, lng: number) => {
+    fetch(`/api/weather?lat=${lat}&lng=${lng}`)
+      .then((r) => r.json())
+      .then((w: WeatherData | null) => { if (w) setWeather(w); })
+      .catch(() => {});
+  }, []);
+
+  // Geolocation fires on mount and whenever the user switches back to GPS mode
   useEffect(() => {
     if (locationMode !== "gps") return;
+
     if (!navigator.geolocation) {
+      // Browser has no geolocation — use Charleston as demo fallback
+      coordsRef.current = CHARLESTON_FALLBACK;
+      locationReadyRef.current = true;
       setStatus("Using Charleston (demo)");
+      if (radiusRef.current > 0) {
+        doFetch(CHARLESTON_FALLBACK.lat, CHARLESTON_FALLBACK.lng, radiusRef.current);
+      }
       return;
     }
 
@@ -65,25 +82,25 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         coordsRef.current = { lat, lng };
+        locationReadyRef.current = true;
         setStatus("Using your location");
-
-        fetch(`/api/weather?lat=${lat}&lng=${lng}`)
-          .then((r) => r.json())
-          .then((w: WeatherData | null) => { if (w) setWeather(w); })
-          .catch(() => {});
-
+        fetchWeather(lat, lng);
+        // If the slider was already moved while GPS was pending, fire now
         if (radiusRef.current > 0) {
           doFetch(lat, lng, radiusRef.current);
         }
       },
       () => {
+        // User denied — fall back to Charleston for demo purposes
+        coordsRef.current = CHARLESTON_FALLBACK;
+        locationReadyRef.current = true;
         setStatus("Using Charleston (location blocked)");
         if (radiusRef.current > 0) {
-          doFetch(DEFAULT_COORDS.lat, DEFAULT_COORDS.lng, radiusRef.current);
+          doFetch(CHARLESTON_FALLBACK.lat, CHARLESTON_FALLBACK.lng, radiusRef.current);
         }
       }
     );
-  }, [doFetch, locationMode]);
+  }, [doFetch, fetchWeather, locationMode]);
 
   const handleZipSearch = async () => {
     if (!zipInput.trim()) return;
@@ -93,7 +110,10 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
       if (!res.ok) throw new Error("Not found");
       const data = (await res.json()) as { lat: number; lng: number; formattedAddress: string };
       coordsRef.current = { lat: data.lat, lng: data.lng };
+      locationReadyRef.current = true;
       setStatus(data.formattedAddress);
+      fetchWeather(data.lat, data.lng);
+      // Always trigger a fetch after a successful ZIP search (regardless of radius state)
       if (radiusRef.current > 0) {
         doFetch(data.lat, data.lng, radiusRef.current);
       }
@@ -109,8 +129,13 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     radiusRef.current = miles;
     if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     if (miles === 0) { setShops([]); return; }
+    // Don't fire until we have confirmed coordinates — the GPS/ZIP handlers
+    // will call doFetch themselves once location resolves
+    if (!locationReadyRef.current) return;
     fetchTimerRef.current = setTimeout(() => {
-      doFetch(coordsRef.current.lat, coordsRef.current.lng, miles);
+      const coords = coordsRef.current;
+      if (!coords) return;
+      doFetch(coords.lat, coords.lng, miles);
     }, 350);
   };
 
@@ -118,7 +143,10 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     setLocationMode(mode);
     setZipInput("");
     if (mode === "gps") {
-      coordsRef.current = DEFAULT_COORDS;
+      // Mark location as pending — GPS effect will re-run and confirm once resolved.
+      // Do NOT reset coordsRef here: if GPS resolves quickly the user won't notice;
+      // if not, the slider is gated by locationReadyRef until GPS fires.
+      locationReadyRef.current = false;
       setStatus("Getting your location…");
     }
   };
@@ -195,7 +223,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
           <div className="mt-3 flex gap-2 animate-slide-up">
             <input
               type="text"
-              inputMode="numeric"
+              inputMode="text"
               placeholder="Enter ZIP or city name"
               value={zipInput}
               onChange={(e) => setZipInput(e.target.value)}

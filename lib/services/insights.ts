@@ -14,22 +14,68 @@ function locationVariance(shopId: string): number {
   return (hash % 25) - 12; // -12 to +12
 }
 
-function getTimeScore(date = new Date()) {
-  const hour = date.getHours();
+/**
+ * Returns the current hour in the shop's local timezone.
+ * Uses utcOffsetMinutes if available (from Google Places); falls back to server local time.
+ */
+export function getLocalHour(utcOffsetMinutes?: number, now = new Date()): number {
+  if (utcOffsetMinutes !== undefined) {
+    const utcMs = now.getTime();
+    const localMs = utcMs + utcOffsetMinutes * 60 * 1000;
+    return new Date(localMs).getUTCHours();
+  }
+  return now.getHours();
+}
+
+/**
+ * Returns the current day-of-week (0=Sun) in the shop's local timezone.
+ */
+export function getLocalDay(utcOffsetMinutes?: number, now = new Date()): number {
+  if (utcOffsetMinutes !== undefined) {
+    const utcMs = now.getTime();
+    const localMs = utcMs + utcOffsetMinutes * 60 * 1000;
+    return new Date(localMs).getUTCDay();
+  }
+  return now.getDay();
+}
+
+export function getTimeScore(utcOffsetMinutes?: number, now = new Date()): number {
+  const hour = getLocalHour(utcOffsetMinutes, now);
   if (hour >= 7 && hour <= 10) return 85;
   if (hour >= 11 && hour <= 14) return 68;
   if (hour >= 15 && hour <= 18) return 52;
   return 34;
 }
 
-function getDayScore(date = new Date()) {
-  const day = date.getDay();
+export function getDayScore(utcOffsetMinutes?: number, now = new Date()): number {
+  const day = getLocalDay(utcOffsetMinutes, now);
   if (day === 0) return 44;
   if (day === 6) return 70;
   return 58;
 }
 
+const CLOSED_INSIGHT: CrowdInsight = {
+  score: 0,
+  label: "Below Average",
+  breakdown: {
+    weatherScore: 0,
+    trafficScore: 0,
+    timeScore: 0,
+    dayScore: 0,
+    eventScore: 0,
+    merchantOverrideScore: 0,
+    rawInputs: { closed: true }
+  },
+  explanation: ["Shop is currently closed."],
+  updatedAt: new Date().toISOString()
+};
+
 export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> {
+  // Closed shops always score 0 — never rank as live recommendations
+  if (shop.isOpenNow === false) {
+    return { ...CLOSED_INSIGHT, updatedAt: new Date().toISOString() };
+  }
+
   if (process.env.USE_MOCK_DATA !== "false") {
     return getMockInsightForShop(shop.id);
   }
@@ -42,8 +88,8 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
   const breakdown: ExternalSignals = {
     weatherScore: weather.score,
     trafficScore: traffic.score,
-    timeScore: getTimeScore(),
-    dayScore: getDayScore(),
+    timeScore: getTimeScore(shop.utcOffsetMinutes),
+    dayScore: getDayScore(shop.utcOffsetMinutes),
     eventScore: 12,
     merchantOverrideScore: 0,
     rawInputs: {
@@ -54,7 +100,6 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
 
   const result = calculateCrowdScore(breakdown);
   const finalScore = clamp(Math.round(result.score + locationVariance(shop.id)), 0, 100);
-  // Re-derive label from finalScore so color and label always match
   const finalLabel = toLabel(finalScore);
 
   return {

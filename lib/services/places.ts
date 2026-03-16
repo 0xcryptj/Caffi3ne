@@ -21,6 +21,8 @@ interface PlacesNewPlace {
   nationalPhoneNumber?: string;
   regularOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
   currentOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
+  /** UTC offset of the place's local timezone in minutes */
+  utcOffsetMinutes?: number;
   types?: string[];
   businessStatus?: string;
   priceLevel?: string;
@@ -53,6 +55,9 @@ function normalizePlacesNewResult(place: PlacesNewPlace, origin?: NearbySearchPa
     return null;
   }
 
+  // Prefer currentOpeningHours (reflects holidays/special hours) over regularOpeningHours
+  const openingHours = place.currentOpeningHours ?? place.regularOpeningHours;
+
   return {
     id,
     googlePlaceId: id,
@@ -64,8 +69,9 @@ function normalizePlacesNewResult(place: PlacesNewPlace, origin?: NearbySearchPa
     userRatingsTotal: place.userRatingCount ?? 0,
     website: place.websiteUri,
     phone: place.nationalPhoneNumber,
-    // Prefer currentOpeningHours (reflects holidays/special days) over regularOpeningHours
-    hours: (place.currentOpeningHours?.weekdayDescriptions ?? place.regularOpeningHours?.weekdayDescriptions) ?? (place.regularOpeningHours?.openNow ? ["Open now"] : ["Hours unavailable"]),
+    hours: openingHours?.weekdayDescriptions ?? ["Hours unavailable"],
+    isOpenNow: openingHours?.openNow,
+    utcOffsetMinutes: place.utcOffsetMinutes,
     distanceMiles: origin ? milesFromCoordinates(origin.lat, origin.lng, lat, lng) : undefined,
     tags: (place.types ?? []).slice(0, 3),
     priceLevel: normalizePriceLevel(place.priceLevel),
@@ -103,6 +109,8 @@ class GooglePlacesProvider implements PlacesProvider {
     "places.rating",
     "places.userRatingCount",
     "places.regularOpeningHours",
+    "places.currentOpeningHours",
+    "places.utcOffsetMinutes",
     "places.types",
     "places.businessStatus",
     "places.priceLevel",
@@ -226,6 +234,7 @@ class GooglePlacesProvider implements PlacesProvider {
       "nationalPhoneNumber",
       "regularOpeningHours",
       "currentOpeningHours",
+      "utcOffsetMinutes",
       "types",
       "priceLevel",
       "photos",
