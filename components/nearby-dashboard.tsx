@@ -13,18 +13,22 @@ interface WeatherData {
   conditionEmoji: string;
 }
 
+interface IpLocation {
+  lat: number;
+  lng: number;
+  city?: string;
+  country?: string;
+}
+
 interface NearbyDashboardProps {
   initialShops: ShopWithInsight[];
 }
-
-// Charleston fallback — only used when the browser explicitly denies geolocation
-const CHARLESTON_FALLBACK = { lat: 32.7765, lng: -79.9311 };
 
 type LocationMode = "gps" | "zip";
 
 export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [shops, setShops] = useState(initialShops);
-  const [status, setStatus] = useState("Getting your location…");
+  const [status, setStatus] = useState("Detecting your location…");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [radius, setRadius] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -32,12 +36,14 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [zipInput, setZipInput] = useState("");
   const [zipLoading, setZipLoading] = useState(false);
 
-  // Confirmed coords — null until a real location is resolved (GPS or ZIP)
+  // null until a location is confirmed — no hardcoded fallback city
   const coordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const radiusRef = useRef(0);
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // True once we have confirmed coordinates (prevents slider from firing with stale/null coords)
+  // Prevents the slider from firing before we have real coordinates
   const locationReadyRef = useRef(false);
+  // Tracks whether precise GPS has already won — prevents IP fallback from overwriting it
+  const gpsResolvedRef = useRef(false);
 
   const doFetch = useCallback(async (lat: number, lng: number, miles: number) => {
     if (miles === 0) { setShops([]); return; }
@@ -62,45 +68,72 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
       .catch(() => {});
   }, []);
 
-  // Geolocation fires on mount and whenever the user switches back to GPS mode
+  /**
+   * Apply a resolved location. GPS (precise=true) always wins over IP location.
+   */
+  const applyLocation = useCallback(
+    (lat: number, lng: number, label: string, precise: boolean) => {
+      // Don't let an IP result overwrite a GPS result
+      if (!precise && gpsResolvedRef.current) return;
+
+      coordsRef.current = { lat, lng };
+      locationReadyRef.current = true;
+      if (precise) gpsResolvedRef.current = true;
+
+      setStatus(label);
+      fetchWeather(lat, lng);
+
+      if (radiusRef.current > 0) {
+        doFetch(lat, lng, radiusRef.current);
+      }
+    },
+    [doFetch, fetchWeather]
+  );
+
+  // On mount, fire both IP geolocation (fast, no permission) and GPS (accurate) in parallel.
+  // GPS upgrades the result if/when it resolves.
   useEffect(() => {
     if (locationMode !== "gps") return;
 
-    if (!navigator.geolocation) {
-      // Browser has no geolocation — use Charleston as demo fallback
-      coordsRef.current = CHARLESTON_FALLBACK;
-      locationReadyRef.current = true;
-      setStatus("Using Charleston (demo)");
-      if (radiusRef.current > 0) {
-        doFetch(CHARLESTON_FALLBACK.lat, CHARLESTON_FALLBACK.lng, radiusRef.current);
-      }
-      return;
-    }
+    gpsResolvedRef.current = false;
+    locationReadyRef.current = false;
+    coordsRef.current = null;
+
+    // ── 1. IP-based location (instant, respects VPN) ───────────────────
+    fetch("/api/location")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((loc: IpLocation) => {
+        const label = loc.city
+          ? `Near ${loc.city}${loc.country ? `, ${loc.country}` : ""}`
+          : "Approximate location";
+        applyLocation(loc.lat, loc.lng, label, false);
+      })
+      .catch(() => {
+        // IP geolocation unavailable (local dev) — wait for GPS or ZIP
+        setStatus("Waiting for location…");
+      });
+
+    // ── 2. Browser GPS (precise, requested in parallel) ─────────────────
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        coordsRef.current = { lat, lng };
-        locationReadyRef.current = true;
-        setStatus("Using your location");
-        fetchWeather(lat, lng);
-        // If the slider was already moved while GPS was pending, fire now
-        if (radiusRef.current > 0) {
-          doFetch(lat, lng, radiusRef.current);
-        }
+        applyLocation(
+          position.coords.latitude,
+          position.coords.longitude,
+          "Using your location",
+          true
+        );
       },
       () => {
-        // User denied — fall back to Charleston for demo purposes
-        coordsRef.current = CHARLESTON_FALLBACK;
-        locationReadyRef.current = true;
-        setStatus("Using Charleston (location blocked)");
-        if (radiusRef.current > 0) {
-          doFetch(CHARLESTON_FALLBACK.lat, CHARLESTON_FALLBACK.lng, radiusRef.current);
+        // GPS denied — IP result (already applied above) stays, or if IP also
+        // failed we show a prompt to use the ZIP search
+        if (!locationReadyRef.current) {
+          setStatus("Location unavailable — try ZIP search");
         }
       }
     );
-  }, [doFetch, fetchWeather, locationMode]);
+  }, [applyLocation, locationMode]);
 
   const handleZipSearch = async () => {
     if (!zipInput.trim()) return;
@@ -113,7 +146,6 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
       locationReadyRef.current = true;
       setStatus(data.formattedAddress);
       fetchWeather(data.lat, data.lng);
-      // Always trigger a fetch after a successful ZIP search (regardless of radius state)
       if (radiusRef.current > 0) {
         doFetch(data.lat, data.lng, radiusRef.current);
       }
@@ -129,8 +161,6 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     radiusRef.current = miles;
     if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     if (miles === 0) { setShops([]); return; }
-    // Don't fire until we have confirmed coordinates — the GPS/ZIP handlers
-    // will call doFetch themselves once location resolves
     if (!locationReadyRef.current) return;
     fetchTimerRef.current = setTimeout(() => {
       const coords = coordsRef.current;
@@ -143,11 +173,9 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     setLocationMode(mode);
     setZipInput("");
     if (mode === "gps") {
-      // Mark location as pending — GPS effect will re-run and confirm once resolved.
-      // Do NOT reset coordsRef here: if GPS resolves quickly the user won't notice;
-      // if not, the slider is gated by locationReadyRef until GPS fires.
       locationReadyRef.current = false;
-      setStatus("Getting your location…");
+      gpsResolvedRef.current = false;
+      setStatus("Detecting your location…");
     }
   };
 
