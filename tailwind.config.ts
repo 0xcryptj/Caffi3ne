@@ -69,6 +69,22 @@ const config: Config = {
         "slide-in-right": {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" }
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px) rotate(-2deg)" },
+          "50%":      { transform: "translateY(-18px) rotate(2deg)" }
+        },
+        "shimmer": {
+          "0%":   { backgroundPosition: "-200% center" },
+          "100%": { backgroundPosition:  "200% center" }
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to:   { transform: "rotate(360deg)" }
+        },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "1",   transform: "scale(1)" },
+          "50%":      { opacity: "0.7", transform: "scale(0.97)" }
         }
       },
       animation: {
@@ -77,7 +93,11 @@ const config: Config = {
         "scale-in":       "scale-in 0.32s ease-out both",
         "slide-up":       "slide-up 0.4s ease-out both",
         "pop-in":         "pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both",
-        "slide-in-right": "slide-in-right 0.35s ease-out both"
+        "slide-in-right": "slide-in-right 0.35s ease-out both",
+        "float":          "float 5s ease-in-out infinite",
+        "shimmer":        "shimmer 2.4s linear infinite",
+        "spin-slow":      "spin-slow 18s linear infinite",
+        "pulse-soft":     "pulse-soft 3s ease-in-out infinite"
       }
     }
   },
