@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat C:/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne/lib/supabase/index.ts 2>/dev/null || find C:/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne -name \"*.ts\" | xargs grep -l \"createClient\" 2>/dev/null)",
+      "Bash(head:*)",
+      "Bash(curl:*)",
+      "Bash(cd C:/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne && npx tsc --noEmit 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && npx tsc --noEmit 2>&1)",
+      "Bash(echo EXIT:$?:*)",
+      "Bash(cd:*)",
+      "Bash(cd /c/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne && npm run build 2>&1)",
+      "Bash(grep:*)",
+      "Bash(cd /c/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne && git push origin main 2>&1)",
+      "Bash(cd /c/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne && vercel --prod 2>&1)",
+      "Bash(tail:*)",
+      "Bash(cd /c/Users/joarb/OneDrive/Desktop/mvp/Caffi3ne && npm test 2>&1)",
+      "Bash(cd C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne:*)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && git push origin main 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && vercel --prod 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && git push origin main 2>&1 && vercel --prod 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && npx shadcn@latest mcp init --client claude 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && git checkout -b dev 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\joarb\\\\OneDrive\\\\Desktop\\\\mvp\\\\Caffi3ne\" && git push origin dev 2>&1)",
+      "WebFetch(domain:www.reactbits.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ]
+  }
+}
