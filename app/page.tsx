@@ -46,7 +46,7 @@ export default function LandingPage() {
             colorStops={["#c47637", "#8f562d", "#d4a96a"]}
             amplitude={1.1}
             blend={0.45}
-            speed={0.7}
+            speed={0.35}
           />
         </div>
 
@@ -81,16 +81,23 @@ export default function LandingPage() {
 
             {/* Headline */}
             <h1
-              className="animate-fade-up font-display text-3xl leading-tight text-espresso-900 sm:text-4xl md:text-5xl lg:text-6xl"
+              className="animate-fade-up font-display text-3xl leading-snug text-espresso-900 sm:text-4xl md:text-5xl lg:text-6xl"
               style={{ animationDelay: "80ms", animationFillMode: "both" }}
             >
               Discover the perfect{" "}
-              <span className="relative inline-flex overflow-hidden align-baseline">
+              {/*
+                overflow-hidden clips descenders → use overflow-y:clip only,
+                and add generous vertical padding so characters never get cut.
+              */}
+              <span
+                className="relative inline-block align-bottom"
+                style={{ overflow: "hidden", paddingBottom: "0.18em", marginBottom: "-0.18em" }}
+              >
                 <RotatingText
                   texts={["coffee shop", "café", "roastery", "espresso bar"]}
                   mainClassName="text-espresso-500 italic font-display"
-                  rotationInterval={2600}
-                  staggerDuration={0.028}
+                  rotationInterval={3800}
+                  staggerDuration={0.045}
                 />
               </span>
               {" "}near you, right now.
@@ -103,7 +110,7 @@ export default function LandingPage() {
             >
               <BlurText
                 text="Caffi3ne gives you live crowd intelligence, ratings, and hours for every cafe around you — so you always know where to go."
-                delay={55}
+                delay={100}
                 animateBy="words"
                 direction="bottom"
                 className="max-w-xl text-sm leading-7 text-espresso-600 sm:text-base sm:leading-8"

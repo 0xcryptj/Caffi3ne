@@ -11,31 +11,33 @@ const BAYER: readonly (readonly number[])[] = [
   [15 / 16,  7 / 16, 13 / 16,  5 / 16],
 ];
 
-// Warm espresso brown palette — matches the site's color tokens
-const DARK  = [50,  28,  11] as const;   // ~espresso-800  #321c0b
-const MID   = [143, 86,  45] as const;   // ~espresso-400  #8f562d
-const LIGHT = [196, 147, 94] as const;   // ~espresso-200  #c4935e
+// 1-bit palette — high contrast for maximum dither visibility
+// DARK:  very dark espresso   LIGHT: warm roasted-coffee brown
+const DARK  = [22,  10,  3]  as const;  // #160a03
+const LIGHT = [168, 104, 52] as const;  // #a86834
 
-/** Pointed coffee-bean silhouette check.
- *  nx / ny are coordinates normalised to [-1, 1] by half-width / half-height.
- *  Returns fraction 0-1 of how far inside the bean (1 = centre, 0 = edge). */
-function beanMask(nx: number, ny: number): number {
+/** Pointed coffee-bean silhouette.
+ *  nx / ny are normalised to [-1,1] relative to the bean's own radii.
+ *  Returns 0 if outside, or a smooth 0→1 "depth" increasing toward the centre. */
+function beanSDF(nx: number, ny: number): number {
   if (Math.abs(ny) >= 1) return 0;
-  // (1 - ny²)^0.55 gives a "pointed-oval" that narrows sharply at the tips
-  const xBound = Math.pow(1 - ny * ny, 0.55);
+  // (1−ny²)^0.52 — pointed oval, narrowing sharply at the tips
+  const xBound = Math.pow(1 - ny * ny, 0.52);
   if (Math.abs(nx) > xBound) return 0;
-  // Smooth distance from edge (0 = edge, 1 = centre)
-  const xFrac = xBound > 0 ? 1 - Math.abs(nx) / xBound : 0;
-  const yFrac = 1 - Math.abs(ny);
-  return Math.min(xFrac, yFrac);
+  // Smooth interior distance (0 = edge, 1 = deepest interior)
+  const xDepth = xBound > 0 ? 1 - Math.abs(nx) / xBound : 0;
+  const yDepth = 1 - Math.abs(ny);
+  return Math.min(xDepth, yDepth);
 }
 
 function renderBean(canvas: HTMLCanvasElement, displaySize: number) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
-  // Render at 1/2.5 resolution → 2.5× pixel scale for chunky dither look
-  const R = Math.round(displaySize / 2.5);
+  // 1/3 scale → 3×3 screen pixels per canvas pixel.
+  // With the 4×4 Bayer matrix this gives a 12×12 px visible dither cell —
+  // perfectly "chunky / technical" without losing the bean shape.
+  const R = Math.max(1, Math.round(displaySize / 3));
   canvas.width  = R;
   canvas.height = R;
 
@@ -44,70 +46,53 @@ function renderBean(canvas: HTMLCanvasElement, displaySize: number) {
 
   const cx = R / 2;
   const cy = R / 2;
-  const rx = R * 0.38;
-  const ry = R * 0.48;
+  const rx = R * 0.37;
+  const ry = R * 0.47;
 
   for (let py = 0; py < R; py++) {
     for (let px = 0; px < R; px++) {
       const nx = (px - cx) / rx;
       const ny = (py - cy) / ry;
 
-      const inside = beanMask(nx, ny);
-      if (inside === 0) continue;
+      const depth = beanSDF(nx, ny);
+      if (depth === 0) continue;
 
-      // ── Shading ───────────────────────────────────────────────────────
-      // Spherical falloff
-      const spherical = inside * 0.9;
+      // ── Shading ─────────────────────────────────────────────────────
+      // Heavy spherical falloff → dark edges, bright centre
+      const spherical = Math.pow(depth, 0.6) * 0.78;
 
-      // Directional key light from upper-left
-      const dir = Math.max(0, -nx * 0.42 - ny * 0.55) * 0.38;
+      // Strong directional key light from upper-left
+      const dir = Math.max(0, -nx * 0.50 - ny * 0.60) * 0.45;
 
-      // Crease: a gentle S-curve from tip to tip
-      const creaseX   = Math.sin(ny * Math.PI * 0.55) * 0.10;
-      const dCrease   = Math.abs(nx - creaseX);
-      const cWidth    = 0.11 * (1 - Math.abs(ny) * 0.4);
-      const inCrease  = dCrease < cWidth;
+      // Coffee-bean crease — S-curve running pole-to-pole
+      const creaseX     = Math.sin(ny * Math.PI * 0.55) * 0.11;
+      const dCrease     = Math.abs(nx - creaseX);
+      const cWidth      = 0.10 * (1 - Math.abs(ny) * 0.45);
+      const inCrease    = dCrease < cWidth;
 
-      // Shadow on the right side of the crease (adds groove depth)
-      const creaseShadow = (nx > creaseX && dCrease < cWidth * 2.2)
-        ? -0.14 * (1 - dCrease / (cWidth * 2.2))
+      // Deep shadow on the shadow side of the crease
+      const creaseShadow = nx > creaseX && dCrease < cWidth * 2.5
+        ? -0.22 * (1 - dCrease / (cWidth * 2.5))
         : 0;
-      // Faint highlight running through the crease centre
-      const creaseHighlight = inCrease
-        ? 0.10 * (1 - dCrease / cWidth)
+      // Specular ridge along the lit side of the crease
+      const creaseGlow = inCrease
+        ? 0.15 * (1 - dCrease / cWidth)
         : 0;
 
-      // Rim darkening around the edge of the bean
-      const rim = inside < 0.18 ? (inside / 0.18) * 0.25 - 0.25 : 0;
+      // Hard rim: very dark band around the silhouette edge
+      const rim = depth < 0.15 ? -0.35 * (1 - depth / 0.15) : 0;
 
-      // Small specular hotspot — upper-left quadrant
-      const specX = -0.28; const specY = -0.32;
-      const specDist = Math.sqrt((nx - specX) ** 2 + (ny - specY) ** 2);
-      const spec = Math.max(0, 1 - specDist / 0.22) ** 3 * 0.18;
+      // Specular hotspot — upper-left
+      const specDist = Math.sqrt((nx + 0.26) ** 2 + (ny + 0.30) ** 2);
+      const spec = Math.max(0, 1 - specDist / 0.20) ** 3 * 0.22;
 
-      let brightness = spherical + dir + creaseShadow + creaseHighlight + rim + spec;
+      let brightness = spherical + dir + creaseShadow + creaseGlow + rim + spec;
       brightness = Math.max(0, Math.min(1, brightness));
 
-      // ── Two-tone dithering ────────────────────────────────────────────
-      // Map brightness to a 3-tone space: DARK (0–0.38), MID (0.38–0.70), LIGHT (0.70–1)
-      // We dither between adjacent tones so the result looks fully continuous.
+      // ── 1-bit ordered dither ────────────────────────────────────────
       const threshold = BAYER[py % 4][px % 4];
-
-      let r: number, g: number, b: number;
-      if (brightness < 0.38) {
-        // Dither DARK ↔ MID
-        const local = brightness / 0.38;
-        const useMid = local > threshold;
-        [r, g, b] = useMid ? MID : DARK;
-      } else if (brightness < 0.72) {
-        // Dither MID ↔ LIGHT
-        const local = (brightness - 0.38) / 0.34;
-        const useLight = local > threshold;
-        [r, g, b] = useLight ? LIGHT : MID;
-      } else {
-        // Full light (only near the specular spot)
-        [r, g, b] = LIGHT;
-      }
+      const isLight   = brightness > threshold;
+      const [r, g, b] = isLight ? LIGHT : DARK;
 
       const i   = (py * R + px) * 4;
       data[i]   = r;
@@ -122,7 +107,6 @@ function renderBean(canvas: HTMLCanvasElement, displaySize: number) {
 
 interface DitherBeanProps {
   displaySize?: number;
-  /** Initial CSS rotation in degrees */
   rotate?: number;
   className?: string;
 }
@@ -136,19 +120,18 @@ export function DitherBean({ displaySize = 340, rotate = 0, className = "" }: Di
 
   return (
     <motion.div
-      className={`cursor-pointer ${className}`}
+      className={`cursor-pointer select-none ${className}`}
       style={{ rotate, originX: "50%", originY: "50%" }}
       whileHover={{
-        y: [0, -14, 0, -10, 0],
-        rotate: [rotate, rotate - 4, rotate + 4, rotate - 2, rotate],
-        scale: 1.04,
+        y: [0, -16, -4, -18, 0],
+        rotate: [rotate, rotate - 5, rotate + 3, rotate - 3, rotate],
+        scale: 1.05,
         transition: {
-          y:      { duration: 2.8, repeat: Infinity, ease: "easeInOut" },
-          rotate: { duration: 2.8, repeat: Infinity, ease: "easeInOut" },
-          scale:  { duration: 0.25, ease: "easeOut" },
+          y:      { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
+          rotate: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
+          scale:  { duration: 0.35, ease: "easeOut" },
         },
       }}
-      transition={{ scale: { duration: 0.3 } }}
     >
       <canvas
         ref={canvasRef}

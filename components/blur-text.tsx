@@ -52,7 +52,7 @@ export function BlurText({
     { filter: "blur(0px)", opacity: 1, y: 0 },
   ];
 
-  const duration = 0.35;
+  const duration = 0.55;
   const times = [0, 0.5, 1];
 
   return (
