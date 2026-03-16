@@ -29,16 +29,16 @@ export default function LandingPage() {
   return (
     <div>
       <section className="bg-hero-glow">
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-28">
           <div className="space-y-8">
             <div className="inline-flex rounded-full border border-espresso-200 bg-crema px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-espresso-600">
               Coffee Intelligence Platform
             </div>
             <div className="space-y-5">
-              <h1 className="max-w-4xl font-display text-5xl leading-tight text-espresso-900 sm:text-6xl">
+              <h1 className="max-w-4xl font-display text-3xl leading-tight text-espresso-900 sm:text-4xl md:text-5xl lg:text-6xl">
                 Find the right coffee shop and understand what it is like right now.
               </h1>
-              <p className="max-w-2xl text-lg leading-8 text-espresso-600">
+              <p className="max-w-2xl text-sm leading-7 text-espresso-600 sm:text-base sm:leading-8">
                 Caffi3ne helps consumers discover nearby cafes and gives merchants and developers a polished data layer around rating, hours, and crowd intelligence.
               </p>
             </div>
@@ -59,12 +59,12 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-espresso-100 bg-white/80 p-8 shadow-panel backdrop-blur">
+          <div className="rounded-[2rem] border border-espresso-100 bg-white/80 p-5 shadow-panel backdrop-blur sm:p-8">
             <div className="space-y-5">
               <div className="flex items-center justify-between rounded-3xl bg-crema p-5">
                 <div>
                   <p className="text-sm text-espresso-500">Current market pulse</p>
-                  <h3 className="mt-1 font-display text-2xl text-espresso-900">Williamsburg morning run</h3>
+                  <h3 className="mt-1 font-display text-lg text-espresso-900 sm:text-2xl">Williamsburg morning run</h3>
                 </div>
                 <div className="rounded-full bg-espresso-800 px-4 py-2 text-sm font-semibold text-crema">
                   Busier Than Usual
@@ -95,7 +95,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-20 lg:px-8">
         <SectionHeading
           eyebrow="Product"
           title="An MVP that can pitch, demo, and evolve"
@@ -106,17 +106,17 @@ export default function LandingPage() {
           {features.map((feature) => (
             <div key={feature.title} className="rounded-[2rem] border border-espresso-100 bg-white p-6 shadow-panel">
               <feature.icon className="h-8 w-8 text-espresso-700" />
-              <h3 className="mt-5 text-xl font-semibold text-espresso-900">{feature.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-espresso-600">{feature.description}</p>
+              <h3 className="mt-4 text-base font-semibold text-espresso-900 sm:text-xl">{feature.title}</h3>
+              <p className="mt-2 text-xs leading-6 text-espresso-600 sm:text-sm sm:leading-7">{feature.description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-20 lg:grid-cols-2 lg:px-8">
-        <div className="rounded-[2rem] border border-espresso-100 bg-white p-8 shadow-panel">
+      <section className="mx-auto grid max-w-7xl gap-6 px-4 pb-12 sm:px-6 sm:pb-20 lg:grid-cols-2 lg:px-8">
+        <div className="rounded-[2rem] border border-espresso-100 bg-white p-5 shadow-panel sm:p-8">
           <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Merchant layer</p>
-          <h3 className="mt-3 font-display text-3xl text-espresso-900">Claim listings and submit missing shops</h3>
+          <h3 className="mt-3 font-display text-xl text-espresso-900 sm:text-2xl lg:text-3xl">Claim listings and submit missing shops</h3>
           <p className="mt-4 text-espresso-600">
             Capture merchant demand early, even before full operational integrations exist.
           </p>
@@ -125,9 +125,9 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        <div className="rounded-[2rem] border border-espresso-100 bg-[#efe2cf] p-8 shadow-panel">
+        <div className="rounded-[2rem] border border-espresso-100 bg-[#efe2cf] p-5 shadow-panel sm:p-8">
           <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Pricing preview</p>
-          <h3 className="mt-3 font-display text-3xl text-espresso-900">Free for demo usage, Pro for heavier API access</h3>
+          <h3 className="mt-3 font-display text-xl text-espresso-900 sm:text-2xl lg:text-3xl">Free for demo usage, Pro for heavier API access</h3>
           <p className="mt-4 text-espresso-700">
             Usage-based framing is included now, while billing remains intentionally mocked for the MVP.
           </p>

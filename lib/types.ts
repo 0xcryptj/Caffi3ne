@@ -4,6 +4,8 @@ export type BusynessLabel =
   | "Busier Than Usual"
   | "Packed";
 
+export type PriceLevel = "FREE" | "INEXPENSIVE" | "MODERATE" | "EXPENSIVE" | "VERY_EXPENSIVE";
+
 export interface Shop {
   id: string;
   googlePlaceId: string;
@@ -18,6 +20,9 @@ export interface Shop {
   hours: string[];
   distanceMiles?: number;
   tags: string[];
+  priceLevel?: PriceLevel;
+  photos?: string[]; // resource names: "places/{id}/photos/{ref}"
+  editorialSummary?: string;
   source?: "mock" | "google";
 }
 

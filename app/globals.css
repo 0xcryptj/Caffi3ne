@@ -25,3 +25,40 @@ body {
 ::selection {
   background: rgba(143, 86, 45, 0.2);
 }
+
+/* ─── Radius slider ────────────────────────────────────────────────────────── */
+.radius-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 9999px;
+  background: #e8d5bf;
+  outline: none;
+  cursor: pointer;
+}
+.radius-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #452815;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgba(38, 25, 14, 0.35);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.radius-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+.radius-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #452815;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 6px rgba(38, 25, 14, 0.35);
+  cursor: pointer;
+  border: none;
+}

@@ -1,89 +1,76 @@
 import { getMockShopById, getMockShops } from "@/lib/data/mock-shops";
 import { externalServicesConfig, hasGoogleApiKey } from "@/lib/services/config";
-import type { NearbySearchParams, Shop } from "@/lib/types";
+import type { NearbySearchParams, PriceLevel, Shop } from "@/lib/types";
+
+const PLACES_NEW_BASE = "https://places.googleapis.com/v1/places";
 
 interface PlacesProvider {
   getNearbyCoffeeShops(params: NearbySearchParams): Promise<Shop[]>;
   getCoffeeShopById(id: string): Promise<Shop | undefined>;
 }
 
-interface GooglePlacesNearbyResult {
-  place_id: string;
-  name: string;
-  vicinity?: string;
-  formatted_address?: string;
+interface PlacesNewPlace {
+  name?: string; // resource name: "places/ChIJ..."
+  id?: string;
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude?: number; longitude?: number };
   rating?: number;
-  user_ratings_total?: number;
-  geometry?: {
-    location?: {
-      lat?: number;
-      lng?: number;
-    };
-  };
-  opening_hours?: {
-    open_now?: boolean;
-  };
-  business_status?: string;
+  userRatingCount?: number;
+  websiteUri?: string;
+  nationalPhoneNumber?: string;
+  regularOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
+  currentOpeningHours?: { openNow?: boolean; weekdayDescriptions?: string[] };
   types?: string[];
-}
-
-interface GooglePlacesNearbyResponse {
-  results?: GooglePlacesNearbyResult[];
-  status: string;
-  error_message?: string;
-}
-
-interface GooglePlaceDetailsResponse {
-  result?: {
-    place_id: string;
-    name: string;
-    formatted_address?: string;
-    rating?: number;
-    user_ratings_total?: number;
-    website?: string;
-    formatted_phone_number?: string;
-    geometry?: {
-      location?: {
-        lat?: number;
-        lng?: number;
-      };
-    };
-    opening_hours?: {
-      weekday_text?: string[];
-      open_now?: boolean;
-    };
-    types?: string[];
-  };
-  status: string;
-  error_message?: string;
+  businessStatus?: string;
+  priceLevel?: string;
+  photos?: { name?: string }[];
+  editorialSummary?: { text?: string };
 }
 
 function milesFromCoordinates(originLat: number, originLng: number, lat: number, lng: number) {
   return Math.hypot(originLat - lat, originLng - lng) * 48;
 }
 
-function normalizeGoogleShop(result: GooglePlacesNearbyResult, origin?: NearbySearchParams): Shop | null {
-  const lat = result.geometry?.location?.lat;
-  const lng = result.geometry?.location?.lng;
+function normalizePriceLevel(raw?: string): PriceLevel | undefined {
+  const map: Record<string, PriceLevel> = {
+    PRICE_LEVEL_FREE: "FREE",
+    PRICE_LEVEL_INEXPENSIVE: "INEXPENSIVE",
+    PRICE_LEVEL_MODERATE: "MODERATE",
+    PRICE_LEVEL_EXPENSIVE: "EXPENSIVE",
+    PRICE_LEVEL_VERY_EXPENSIVE: "VERY_EXPENSIVE"
+  };
+  return raw ? map[raw] : undefined;
+}
 
-  if (lat === undefined || lng === undefined) {
+function normalizePlacesNewResult(place: PlacesNewPlace, origin?: NearbySearchParams): Shop | null {
+  const lat = place.location?.latitude;
+  const lng = place.location?.longitude;
+  const id = place.id;
+  const name = place.displayName?.text;
+
+  if (lat === undefined || lng === undefined || !id || !name) {
     return null;
   }
 
   return {
-    id: result.place_id,
-    googlePlaceId: result.place_id,
-    name: result.name,
-    address: result.vicinity ?? result.formatted_address ?? "Address unavailable",
+    id,
+    googlePlaceId: id,
+    name,
+    address: place.formattedAddress ?? "Address unavailable",
     lat,
     lng,
-    rating: result.rating ?? 0,
-    userRatingsTotal: result.user_ratings_total ?? 0,
-    website: undefined,
-    phone: undefined,
-    hours: result.opening_hours?.open_now ? ["Open now", "Hours via Google Places details"] : ["Hours unavailable"],
+    rating: place.rating ?? 0,
+    userRatingsTotal: place.userRatingCount ?? 0,
+    website: place.websiteUri,
+    phone: place.nationalPhoneNumber,
+    // Prefer currentOpeningHours (reflects holidays/special days) over regularOpeningHours
+    hours: (place.currentOpeningHours?.weekdayDescriptions ?? place.regularOpeningHours?.weekdayDescriptions) ?? (place.regularOpeningHours?.openNow ? ["Open now"] : ["Hours unavailable"]),
     distanceMiles: origin ? milesFromCoordinates(origin.lat, origin.lng, lat, lng) : undefined,
-    tags: (result.types ?? []).slice(0, 3),
+    tags: (place.types ?? []).slice(0, 3),
+    priceLevel: normalizePriceLevel(place.priceLevel),
+    photos: (place.photos ?? []).map((p) => p.name).filter((n): n is string => Boolean(n)).slice(0, 5),
+    editorialSummary: place.editorialSummary?.text,
     source: "google"
   };
 }
@@ -104,105 +91,168 @@ class MockPlacesProvider implements PlacesProvider {
 }
 
 class GooglePlacesProvider implements PlacesProvider {
-  async getNearbyCoffeeShops(params: NearbySearchParams): Promise<Shop[]> {
-    const query = new URLSearchParams({
-      location: `${params.lat},${params.lng}`,
-      radius: String(params.radius),
-      type: "cafe",
-      keyword: "coffee",
-      key: externalServicesConfig.googleApiKey ?? ""
-    });
+  private get apiKey() {
+    return externalServicesConfig.googleApiKey ?? "";
+  }
 
-    const response = await fetch(
-      `${externalServicesConfig.google.placesBaseUrl}/nearbysearch/json?${query.toString()}`,
-      {
+  private readonly fieldMask = [
+    "places.id",
+    "places.displayName",
+    "places.formattedAddress",
+    "places.location",
+    "places.rating",
+    "places.userRatingCount",
+    "places.regularOpeningHours",
+    "places.types",
+    "places.businessStatus",
+    "places.priceLevel",
+    "places.photos",
+    "places.websiteUri",
+    "places.nationalPhoneNumber"
+  ].join(",");
+
+  /** Single Places API call for one circle. Returns up to 20 results. */
+  private async searchCircle(
+    lat: number,
+    lng: number,
+    radius: number,
+    origin: NearbySearchParams
+  ): Promise<Shop[]> {
+    const body = {
+      includedTypes: ["cafe", "coffee_shop"],
+      maxResultCount: 20,
+      locationRestriction: {
+        circle: {
+          center: { latitude: lat, longitude: lng },
+          radius: Math.min(radius, 50000)
+        }
+      },
+      rankPreference: "DISTANCE"
+    };
+
+    try {
+      const response = await fetch(`${PLACES_NEW_BASE}:searchNearby`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": this.apiKey,
+          "X-Goog-FieldMask": this.fieldMask
+        },
+        body: JSON.stringify(body),
         next: { revalidate: 300 }
-      }
+      });
+      if (!response.ok) return [];
+      const payload = (await response.json()) as { places?: PlacesNewPlace[] };
+      return (payload.places ?? [])
+        .map((p) => normalizePlacesNewResult(p, origin))
+        .filter((shop): shop is Shop => shop !== null);
+    } catch {
+      return [];
+    }
+  }
+
+  async getNearbyCoffeeShops(params: NearbySearchParams): Promise<Shop[]> {
+    // Places API (New) caps at 20 results per call.
+    // For large radii we tile with 5 overlapping circles (center + 4 cardinal offsets)
+    // so we can surface up to ~60-80 unique shops.
+    const SUB_RADIUS = 3000; // 3 km — keeps multi-search active for city-scale radii
+
+    let centers: [number, number][];
+
+    if (params.radius <= SUB_RADIUS) {
+      centers = [[params.lat, params.lng]];
+    } else {
+      // 3×3 grid (9 circles): center + 8 compass positions
+      // Offset ≈ 45% of requested radius, converted to degrees
+      const mPerDegLat = 111_000;
+      const mPerDegLng = 111_000 * Math.cos((params.lat * Math.PI) / 180);
+      const offsetLat = (params.radius * 0.45) / mPerDegLat;
+      const offsetLng = (params.radius * 0.45) / mPerDegLng;
+
+      centers = [
+        [params.lat,             params.lng            ], // center
+        [params.lat + offsetLat, params.lng            ], // N
+        [params.lat - offsetLat, params.lng            ], // S
+        [params.lat,             params.lng + offsetLng], // E
+        [params.lat,             params.lng - offsetLng], // W
+        [params.lat + offsetLat, params.lng + offsetLng], // NE
+        [params.lat + offsetLat, params.lng - offsetLng], // NW
+        [params.lat - offsetLat, params.lng + offsetLng], // SE
+        [params.lat - offsetLat, params.lng - offsetLng], // SW
+      ];
+    }
+
+    const subRadius = params.radius <= SUB_RADIUS
+      ? params.radius
+      : Math.min(params.radius * 0.6, 50_000);
+
+    const batches = await Promise.all(
+      centers.map(([lat, lng]) => this.searchCircle(lat, lng, subRadius, params))
     );
 
-    if (!response.ok) {
-      throw new Error(`Google Places nearby search failed with ${response.status}`);
+    // Deduplicate by place ID and filter to the true requested radius
+    const seen = new Set<string>();
+    const results: Shop[] = [];
+    const mPerDegLat = 111_000;
+    const mPerDegLng = 111_000 * Math.cos((params.lat * Math.PI) / 180);
+
+    for (const batch of batches) {
+      for (const shop of batch) {
+        if (seen.has(shop.id)) continue;
+        seen.add(shop.id);
+
+        // Distance check — keep only shops inside the original requested circle
+        const distM = Math.hypot(
+          (shop.lat - params.lat) * mPerDegLat,
+          (shop.lng - params.lng) * mPerDegLng
+        );
+        if (distM <= params.radius) results.push(shop);
+      }
     }
 
-    const payload = (await response.json()) as GooglePlacesNearbyResponse;
-
-    if (payload.status !== "OK" && payload.status !== "ZERO_RESULTS") {
-      throw new Error(payload.error_message ?? `Google Places nearby search returned ${payload.status}`);
-    }
-
-    return (payload.results ?? [])
-      .map((result) => normalizeGoogleShop(result, params))
-      .filter((shop): shop is Shop => shop !== null);
+    // Sort by distance ascending
+    return results.sort((a, b) => (a.distanceMiles ?? 0) - (b.distanceMiles ?? 0));
   }
 
   async getCoffeeShopById(id: string): Promise<Shop | undefined> {
-    const query = new URLSearchParams({
-      place_id: id,
-      fields: [
-        "place_id",
-        "name",
-        "formatted_address",
-        "geometry",
-        "rating",
-        "user_ratings_total",
-        "website",
-        "formatted_phone_number",
-        "opening_hours",
-        "types"
-      ].join(","),
-      key: externalServicesConfig.googleApiKey ?? ""
+    const fieldMask = [
+      "id",
+      "displayName",
+      "formattedAddress",
+      "location",
+      "rating",
+      "userRatingCount",
+      "websiteUri",
+      "nationalPhoneNumber",
+      "regularOpeningHours",
+      "currentOpeningHours",
+      "types",
+      "priceLevel",
+      "photos",
+      "editorialSummary"
+    ].join(",");
+
+    const response = await fetch(`${PLACES_NEW_BASE}/${id}`, {
+      headers: {
+        "X-Goog-Api-Key": this.apiKey,
+        "X-Goog-FieldMask": fieldMask
+      },
+      next: { revalidate: 300 }
     });
 
-    const response = await fetch(
-      `${externalServicesConfig.google.placesBaseUrl}/details/json?${query.toString()}`,
-      {
-        next: { revalidate: 300 }
-      }
-    );
-
     if (!response.ok) {
-      throw new Error(`Google Places details failed with ${response.status}`);
-    }
-
-    const payload = (await response.json()) as GooglePlaceDetailsResponse;
-
-    if (payload.status !== "OK") {
       return undefined;
     }
 
-    const result = payload.result;
-    const lat = result?.geometry?.location?.lat;
-    const lng = result?.geometry?.location?.lng;
-
-    if (!result || lat === undefined || lng === undefined) {
-      return undefined;
-    }
-
-    return {
-      id: result.place_id,
-      googlePlaceId: result.place_id,
-      name: result.name,
-      address: result.formatted_address ?? "Address unavailable",
-      lat,
-      lng,
-      rating: result.rating ?? 0,
-      userRatingsTotal: result.user_ratings_total ?? 0,
-      website: result.website,
-      phone: result.formatted_phone_number,
-      hours: result.opening_hours?.weekday_text ?? ["Hours unavailable"],
-      distanceMiles: undefined,
-      tags: (result.types ?? []).slice(0, 3),
-      source: "google"
-    };
+    const place = (await response.json()) as PlacesNewPlace;
+    return normalizePlacesNewResult(place) ?? undefined;
   }
 }
 
 function getPlacesProvider(): PlacesProvider {
-  // Provider selection stays isolated here so Yelp or Foursquare can be dropped in later.
   if (externalServicesConfig.useMockData || !hasGoogleApiKey()) {
     return new MockPlacesProvider();
   }
-
   return new GooglePlacesProvider();
 }
 

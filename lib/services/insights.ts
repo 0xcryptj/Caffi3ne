@@ -1,8 +1,18 @@
-import { calculateCrowdScore } from "@/lib/crowd-score";
+import { calculateCrowdScore, toLabel } from "@/lib/crowd-score";
+import { clamp } from "@/lib/utils";
 import { getMockInsightForShop } from "@/lib/data/mock-shops";
 import { getTrafficSignal } from "@/lib/services/traffic";
 import { getWeatherSignal } from "@/lib/services/weather";
 import type { CrowdInsight, ExternalSignals, Shop } from "@/lib/types";
+
+// Deterministic per-shop variance so shops at the same location don't all show identical scores
+function locationVariance(shopId: string): number {
+  let hash = 0;
+  for (let i = 0; i < shopId.length; i++) {
+    hash = (hash * 31 + shopId.charCodeAt(i)) & 0xffff;
+  }
+  return (hash % 25) - 12; // -12 to +12
+}
 
 function getTimeScore(date = new Date()) {
   const hour = date.getHours();
@@ -43,10 +53,13 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
   };
 
   const result = calculateCrowdScore(breakdown);
+  const finalScore = clamp(Math.round(result.score + locationVariance(shop.id)), 0, 100);
+  // Re-derive label from finalScore so color and label always match
+  const finalLabel = toLabel(finalScore);
 
   return {
-    score: result.score,
-    label: result.label,
+    score: finalScore,
+    label: finalLabel,
     breakdown,
     explanation: [
       "Live score blends weather, traffic, and temporal demand signals.",

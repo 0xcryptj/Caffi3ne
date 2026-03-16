@@ -4,7 +4,6 @@ export const externalServicesConfig = {
   tomtomApiKey: process.env.TOMTOM_API_KEY,
   useMockData: process.env.USE_MOCK_DATA !== "false",
   google: {
-    placesBaseUrl: "https://maps.googleapis.com/maps/api/place",
     mapsJavaScriptApiUrl: "https://maps.googleapis.com/maps/api/js"
   }
 } as const;

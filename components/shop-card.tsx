@@ -1,48 +1,70 @@
 import Link from "next/link";
-import { Clock3, MapPin, Star, Users } from "lucide-react";
-import type { ShopWithInsight } from "@/lib/types";
+import type { BusynessLabel, ShopWithInsight } from "@/lib/types";
 import { formatDistance, formatScore } from "@/lib/utils";
+import { ShopLogo } from "@/components/shop-logo";
+import { CrowdBar } from "@/components/crowd-bar";
+
+const crowdStyles: Record<BusynessLabel, { pill: string }> = {
+  "Below Average":     { pill: "bg-slate-100 text-slate-600" },
+  "Average":           { pill: "bg-emerald-50 text-emerald-700" },
+  "Busier Than Usual": { pill: "bg-amber-50 text-amber-700" },
+  "Packed":            { pill: "bg-red-50 text-red-700" }
+};
 
 interface ShopCardProps {
   shop: ShopWithInsight;
+  index?: number;
 }
 
-export function ShopCard({ shop }: ShopCardProps) {
+export function ShopCard({ shop, index = 0 }: ShopCardProps) {
+  const { pill } = crowdStyles[shop.insight.label];
+  const hours = shop.hours[0]?.replace(/^[A-Za-z]+:\s*/, "") ?? "";
+
   return (
     <Link
       href={`/shops/${shop.id}`}
-      className="block rounded-3xl border border-espresso-100 bg-white p-5 shadow-panel transition hover:-translate-y-0.5"
+      className="group flex items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-5"
+      style={{ animationDelay: `${index * 55}ms`, animationFillMode: "both" }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-semibold text-espresso-900">{shop.name}</h3>
-          <p className="mt-1 text-sm text-espresso-500">{shop.address}</p>
-        </div>
-        <span className="rounded-full bg-espresso-50 px-3 py-1 text-xs font-medium text-espresso-700">
-          {formatDistance(shop.distanceMiles)}
-        </span>
-      </div>
+      <ShopLogo website={shop.website} name={shop.name} />
 
-      <div className="mt-5 grid gap-3 text-sm text-espresso-700 sm:grid-cols-2">
-        <div className="flex items-center gap-2">
-          <Star className="h-4 w-4 text-amber-500" />
-          <span>
-            {shop.rating} rating ({shop.userRatingsTotal.toLocaleString()} reviews)
+      <div className="min-w-0 flex-1">
+        {/* Name + distance */}
+        <div className="flex items-start gap-2">
+          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-espresso-900 transition-colors group-hover:text-espresso-700 sm:text-base">
+            {shop.name}
+          </h3>
+          {shop.distanceMiles !== undefined && (
+            <span className="shrink-0 text-xs font-medium tabular-nums text-espresso-400 sm:text-sm">
+              {formatDistance(shop.distanceMiles)}
+            </span>
+          )}
+        </div>
+
+        <p className="mt-0.5 truncate text-xs text-espresso-400 sm:text-sm">{shop.address}</p>
+
+        {/* Status row */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium sm:px-2.5 sm:py-1 ${pill}`}>
+            <CrowdBar label={shop.insight.label} score={shop.insight.score} />
+            {shop.insight.label}
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Clock3 className="h-4 w-4 text-espresso-500" />
-          <span>{shop.hours[0]}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-espresso-500" />
-          <span>
-            {shop.insight.label} ({formatScore(shop.insight.score)}/100)
+
+          <span className="text-xs tabular-nums text-espresso-700">
+            <span className="font-semibold">{formatScore(shop.insight.score)}</span>
+            <span className="text-espresso-400">/100</span>
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-espresso-500" />
-          <span>{shop.tags.join(" • ")}</span>
+
+          {shop.rating > 0 && (
+            <span className="text-xs text-espresso-600">
+              {shop.rating}
+              <span className="ml-1 text-espresso-400">· {shop.userRatingsTotal.toLocaleString()}</span>
+            </span>
+          )}
+
+          {hours && (
+            <span className="ml-auto hidden truncate text-xs text-espresso-400 sm:inline">{hours}</span>
+          )}
         </div>
       </div>
     </Link>

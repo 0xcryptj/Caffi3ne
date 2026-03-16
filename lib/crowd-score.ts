@@ -6,7 +6,7 @@ export interface CrowdScoreResult {
   label: BusynessLabel;
 }
 
-function toLabel(score: number): BusynessLabel {
+export function toLabel(score: number): BusynessLabel {
   if (score < 30) return "Below Average";
   if (score < 55) return "Average";
   if (score < 78) return "Busier Than Usual";
