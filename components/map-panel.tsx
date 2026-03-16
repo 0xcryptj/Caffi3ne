@@ -14,6 +14,47 @@ function scoreToColor(score: number) {
   return "#7f8c8d";
 }
 
+const LABEL_STYLE: Record<string, { bg: string; color: string }> = {
+  "Below Average":     { bg: "#f1f5f9", color: "#475569" },
+  "Average":           { bg: "#f0fdf4", color: "#15803d" },
+  "Busier Than Usual": { bg: "#fffbeb", color: "#b45309" },
+  "Packed":            { bg: "#fef2f2", color: "#b91c1c" },
+};
+
+function buildPopupHtml(shop: ShopWithInsight): string {
+  const ls = LABEL_STYLE[shop.insight.label] ?? { bg: "#f5ebe0", color: "#452815" };
+  const scoreColor = scoreToColor(shop.insight.score);
+  const isClosed = shop.isOpenNow === false;
+  const isOpen   = shop.isOpenNow === true;
+  const distStr  = shop.distanceMiles !== undefined
+    ? `<span style="font-size:11px;color:#8f562d">📍 ${shop.distanceMiles.toFixed(1)} mi</span>`
+    : "";
+  const openBadge = isClosed
+    ? `<span style="color:#dc2626;font-size:11px;font-weight:700;letter-spacing:0.03em">CLOSED</span>`
+    : isOpen
+    ? `<span style="color:#16a34a;font-size:11px;font-weight:600">Open now</span>`
+    : "";
+
+  return `
+<div style="font-family:system-ui,-apple-system,sans-serif;padding:14px 16px;max-width:260px;min-width:210px;box-sizing:border-box">
+  <div style="font-weight:700;font-size:15px;color:#2b1b0e;line-height:1.3;margin-bottom:3px">${shop.name}</div>
+  <div style="font-size:11px;color:#8f562d;margin-bottom:10px;line-height:1.4">${shop.address}</div>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+    <span style="background:${ls.bg};color:${ls.color};border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600">${shop.insight.label}</span>
+    <span style="font-size:13px;font-weight:700;color:${scoreColor}">${shop.insight.score}</span><span style="font-size:11px;color:#b47d4d">/100</span>
+    ${openBadge}
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;font-size:12px;color:#704221;margin-bottom:12px">
+    ${shop.rating > 0 ? `<span>⭐ ${shop.rating}</span>` : ""}
+    ${distStr}
+  </div>
+  <a href="/shops/${shop.id}"
+     style="display:block;text-align:center;background:#2b1b0e;color:#fff8ef;border-radius:999px;padding:8px 16px;font-size:12px;font-weight:600;text-decoration:none">
+    View details →
+  </a>
+</div>`;
+}
+
 // Warm coffee-toned map style
 const COFFEE_MAP_STYLE = [
   { elementType: "geometry", stylers: [{ color: "#ebe3d5" }] },
@@ -95,32 +136,28 @@ export function MapPanel({ shops }: MapPanelProps) {
         const pos = { lat: shop.lat, lng: shop.lng };
         bounds.extend(pos);
 
+        const isClosed = shop.isOpenNow === false;
+
         const marker = new g.maps.Marker({
           position: pos,
           map,
           title: shop.name,
           icon: {
             path: g.maps.SymbolPath.CIRCLE,
-            scale: 11,
-            fillColor: scoreToColor(shop.insight.score),
-            fillOpacity: 1,
+            scale: isClosed ? 8 : 11,
+            fillColor: isClosed ? "#9ca3af" : scoreToColor(shop.insight.score),
+            fillOpacity: isClosed ? 0.5 : 1,
             strokeColor: "#ffffff",
             strokeWeight: 2.5
           }
         });
         markers.push(marker);
 
-        const content = `
-          <div style="padding:10px 12px;max-width:220px;font-family:system-ui,sans-serif">
-            <div style="font-weight:600;font-size:14px;color:#2b1b0e">${shop.name}</div>
-            <div style="font-size:12px;color:#7a5c44;margin:3px 0 6px">${shop.address}</div>
-            <div style="display:flex;gap:8px;font-size:12px">
-              <span>⭐ ${shop.rating}</span>
-              <span style="color:${scoreToColor(shop.insight.score)};font-weight:600">${shop.insight.label}</span>
-            </div>
-          </div>`;
+        const infoWindow = new g.maps.InfoWindow({
+          content: buildPopupHtml(shop),
+          maxWidth: 280
+        });
 
-        const infoWindow = new g.maps.InfoWindow({ content });
         marker.addListener("click", () => {
           if (openWindow) openWindow.close();
           infoWindow.open(map, marker);
@@ -130,12 +167,14 @@ export function MapPanel({ shops }: MapPanelProps) {
 
       markersRef.current = markers;
 
-      // Busyness heat map layer
+      // Busyness heat map layer (open shops only)
       if (g.maps.visualization?.HeatmapLayer) {
-        const heatData = shops.map((shop) => ({
-          location: new g.maps.LatLng(shop.lat, shop.lng),
-          weight: shop.insight.score / 100
-        }));
+        const heatData = shops
+          .filter((s) => s.isOpenNow !== false)
+          .map((shop) => ({
+            location: new g.maps.LatLng(shop.lat, shop.lng),
+            weight: shop.insight.score / 100
+          }));
         const heatmap = new g.maps.visualization.HeatmapLayer({
           data: heatData,
           radius: 60,
@@ -165,7 +204,6 @@ export function MapPanel({ shops }: MapPanelProps) {
 
     const script = document.createElement("script");
     script.id = "gmap-script";
-    // Load visualization library for heat map
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=visualization`;
     script.async = true;
     script.onload = initMap;
@@ -175,7 +213,6 @@ export function MapPanel({ shops }: MapPanelProps) {
 
   return (
     <div className="relative overflow-hidden rounded-[2rem] border border-espresso-100 bg-[#efe5d5] p-4 shadow-panel sm:p-6">
-      {/* Header — label + controls on top row; heading on its own line to prevent overflow */}
       <div className="mb-4">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Map View</p>

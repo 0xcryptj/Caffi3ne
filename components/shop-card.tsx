@@ -23,7 +23,7 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
   return (
     <Link
       href={`/shops/${shop.id}`}
-      className="group flex min-w-0 items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-4"
+      className={`group flex min-w-0 items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-4 ${shop.isOpenNow === false ? "opacity-60" : ""}`}
       style={{ animationDelay: `${index * 55}ms`, animationFillMode: "both" }}
     >
       <ShopLogo website={shop.website} name={shop.name} />
@@ -45,6 +45,11 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
 
         {/* Status row */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {shop.isOpenNow === false && (
+            <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold tracking-wide text-red-600">
+              CLOSED
+            </span>
+          )}
           <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${pill}`}>
             <CrowdBar label={shop.insight.label} score={shop.insight.score} />
             {shop.insight.label}

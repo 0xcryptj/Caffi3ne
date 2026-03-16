@@ -24,6 +24,21 @@ function priceLabel(level?: PriceLevel) {
   return level ? map[level] : null;
 }
 
+// Well-known chain domains — these have store locators, not menus, on their homepage
+const CHAIN_DOMAINS = new Set([
+  "starbucks.com", "dunkin.com", "dunkindonuts.com", "peets.com",
+  "cariboucoffee.com", "dutchbros.com", "biggby.com", "scooterscoffee.com",
+  "philzcoffee.com", "bluebottlecoffee.com", "intelligentsia.com",
+  "lacolombe.com", "gregoryscoffee.com", "timhortons.com", "coffeebean.com",
+  "secondcup.com", "lavazza.com", "illy.com",
+]);
+
+function isChain(website?: string): boolean {
+  if (!website) return false;
+  const domain = website.replace(/^https?:\/\//, "").split("/")[0].replace(/^www\./, "");
+  return CHAIN_DOMAINS.has(domain);
+}
+
 function vibeLabel(shop: Shop): string {
   const types = shop.tags.map((t) => t.toLowerCase());
   const price = shop.priceLevel;
@@ -59,6 +74,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
   const vibe = vibeLabel(shop);
   const price = priceLabel(shop.priceLevel);
   const photos = shop.photos ?? [];
+  const chain = isChain(shop.website);
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
@@ -192,14 +208,16 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             <p className="mt-3 text-sm leading-7 text-espresso-600 sm:mt-4 sm:text-base sm:leading-8">{brief}</p>
           </div>
 
-          {/* Menu & Website */}
+          {/* Visit Website / Store Locator */}
           {shop.website && (
             <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <ExternalLink className="h-4 w-4 shrink-0 text-espresso-400 sm:h-5 sm:w-5" />
-                    <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">Menu &amp; Website</h2>
+                    <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">
+                      {chain ? "Store Locator" : "Visit Website"}
+                    </h2>
                   </div>
                   <p className="mt-1 truncate text-xs text-espresso-500 sm:text-sm">
                     {shop.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
@@ -211,7 +229,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
                   rel="noopener noreferrer"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-espresso-900 px-5 py-3 text-sm font-semibold text-crema transition hover:bg-espresso-800 sm:w-auto"
                 >
-                  Browse Menu
+                  {chain ? "Find a Store" : "Visit Website"}
                   <ExternalLink className="h-4 w-4 shrink-0" />
                 </a>
               </div>
