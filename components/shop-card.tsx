@@ -23,7 +23,7 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
   return (
     <Link
       href={`/shops/${shop.id}`}
-      className="group flex items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-5"
+      className="group flex min-w-0 items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-4"
       style={{ animationDelay: `${index * 55}ms`, animationFillMode: "both" }}
     >
       <ShopLogo website={shop.website} name={shop.name} />
@@ -31,21 +31,21 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
       <div className="min-w-0 flex-1">
         {/* Name + distance */}
         <div className="flex items-start gap-2">
-          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-espresso-900 transition-colors group-hover:text-espresso-700 sm:text-base">
+          <h3 className="min-w-0 flex-1 truncate text-sm font-semibold tracking-tight text-espresso-900 transition-colors group-hover:text-espresso-700">
             {shop.name}
           </h3>
           {shop.distanceMiles !== undefined && (
-            <span className="shrink-0 text-xs font-medium tabular-nums text-espresso-400 sm:text-sm">
+            <span className="shrink-0 text-xs font-medium tabular-nums text-espresso-400">
               {formatDistance(shop.distanceMiles)}
             </span>
           )}
         </div>
 
-        <p className="mt-0.5 truncate text-xs text-espresso-400 sm:text-sm">{shop.address}</p>
+        <p className="mt-0.5 truncate text-xs text-espresso-400">{shop.address}</p>
 
         {/* Status row */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium sm:px-2.5 sm:py-1 ${pill}`}>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${pill}`}>
             <CrowdBar label={shop.insight.label} score={shop.insight.score} />
             {shop.insight.label}
           </span>

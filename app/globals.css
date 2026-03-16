@@ -8,10 +8,13 @@
 
 html {
   scroll-behavior: smooth;
+  /* Prevent any child from causing horizontal scroll */
+  overflow-x: clip;
 }
 
 body {
   min-height: 100vh;
+  overflow-x: clip;
   background:
     radial-gradient(circle at top, rgba(180, 125, 77, 0.1), transparent 32%),
     linear-gradient(180deg, #fbf8f3 0%, #f6f1ea 100%);
@@ -30,12 +33,15 @@ body {
 .radius-slider {
   -webkit-appearance: none;
   appearance: none;
+  display: block;      /* prevents inline min-width quirks on iOS */
   width: 100%;
+  min-width: 0;        /* allows shrinking inside flex/grid parents */
   height: 5px;
   border-radius: 9999px;
   background: #e8d5bf;
   outline: none;
   cursor: pointer;
+  touch-action: pan-y; /* allow vertical scroll while dragging on touch */
 }
 .radius-slider::-webkit-slider-thumb {
   -webkit-appearance: none;

@@ -134,30 +134,30 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     <div className="space-y-5">
 
       {/* ── Header card ────────────────────────────────────────────────── */}
-      <div className="animate-fade-in rounded-[2rem] border border-espresso-100 bg-white p-5 shadow-panel sm:p-6">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="animate-fade-in rounded-[2rem] border border-espresso-100 bg-white p-4 shadow-panel sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Nearby Intelligence</p>
-            <h1 className="mt-2 font-display text-3xl text-espresso-900 sm:text-4xl">
+            <h1 className="mt-2 font-display text-2xl text-espresso-900 sm:text-3xl">
               Coffee shops around you
             </h1>
-            <p className="mt-2 max-w-xl text-sm leading-7 text-espresso-600 sm:text-base">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-espresso-600 sm:leading-7 sm:text-base">
               Discover nearby cafes, compare demand, and understand what&apos;s happening right now.
             </p>
           </div>
 
           {/* Status + weather pills */}
           <div className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
-            <div className="flex items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5">
+            <div className="flex min-w-0 items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5">
               <LocateFixed className="h-3.5 w-3.5 shrink-0 text-espresso-500" />
-              <span className="max-w-[200px] truncate text-xs text-espresso-700">{status}</span>
+              <span className="min-w-0 max-w-[180px] truncate text-xs text-espresso-700">{status}</span>
             </div>
             {weather && (
               <div className="flex items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5 text-xs text-espresso-700">
                 <span>{weather.conditionEmoji}</span>
-                <span className="whitespace-nowrap">
+                <span className="truncate">
                   {weather.tempF}°F · {weather.conditionLabel}
-                  {weather.precipProbability > 10 ? ` · ${weather.precipProbability}% rain` : ""}
+                  {weather.precipProbability > 10 ? ` · ${weather.precipProbability}%` : ""}
                 </span>
               </div>
             )}
@@ -218,10 +218,10 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         )}
 
         {/* ── Radius slider ─────────────────────────────────────────────── */}
-        <div className="mt-5 rounded-2xl bg-espresso-50 px-4 py-4">
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-sm font-medium text-espresso-700">Search radius</span>
-            <span className="rounded-full bg-espresso-900 px-3 py-0.5 text-xs font-semibold text-crema tabular-nums">
+        <div className="mt-4 rounded-2xl bg-espresso-50 px-3 py-3.5 sm:px-4 sm:py-4">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium text-espresso-700 sm:text-sm">Search radius</span>
+            <span className="rounded-full bg-espresso-900 px-2.5 py-0.5 text-xs font-semibold text-crema tabular-nums">
               {radiusLabel}
             </span>
           </div>
@@ -237,7 +237,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
               background: `linear-gradient(to right, #452815 0%, #452815 ${sliderPct}%, #e8d5bf ${sliderPct}%, #e8d5bf 100%)`
             }}
           />
-          <div className="mt-1.5 flex justify-between text-[10px] text-espresso-400 sm:text-[11px]">
+          <div className="mt-1.5 flex justify-between text-[9px] text-espresso-400 sm:text-[10px]">
             <span>0</span>
             <span>5 mi</span>
             <span>10 mi</span>

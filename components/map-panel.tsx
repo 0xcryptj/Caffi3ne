@@ -175,28 +175,29 @@ export function MapPanel({ shops }: MapPanelProps) {
 
   return (
     <div className="relative overflow-hidden rounded-[2rem] border border-espresso-100 bg-[#efe5d5] p-4 shadow-panel sm:p-6">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-espresso-500">Map View</p>
-          <h3 className="font-display text-2xl text-espresso-900">Coffee density snapshot</h3>
+      {/* Header — label + controls on top row; heading on its own line to prevent overflow */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Map View</p>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {status === "ready" && (
+              <button
+                onClick={() => setHeatmapOn((v) => !v)}
+                className="rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-medium text-espresso-700 shadow-sm transition hover:bg-espresso-50"
+              >
+                {heatmapOn ? "Show Pins" : "Heat Map"}
+              </button>
+            )}
+            {!heatmapOn && (
+              <div className="hidden gap-3 text-xs text-espresso-600 sm:flex">
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#27ae60]" />Quiet</span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#e67e22]" />Busy</span>
+                <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#c0392b]" />Packed</span>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {status === "ready" && (
-            <button
-              onClick={() => setHeatmapOn((v) => !v)}
-              className="rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-medium text-espresso-700 shadow-sm transition hover:bg-espresso-50"
-            >
-              {heatmapOn ? "Show Pins" : "Heat Map"}
-            </button>
-          )}
-          {!heatmapOn && (
-            <div className="hidden gap-3 text-xs text-espresso-600 sm:flex">
-              <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#27ae60]" />Quiet</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#e67e22]" />Busy</span>
-              <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full bg-[#c0392b]" />Packed</span>
-            </div>
-          )}
-        </div>
+        <h3 className="mt-1 font-display text-xl text-espresso-900 sm:text-2xl">Coffee density snapshot</h3>
       </div>
 
       <div className="relative overflow-hidden rounded-[1.5rem] border border-white/60 h-64 sm:h-80 lg:h-[420px]">

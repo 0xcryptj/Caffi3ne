@@ -20,19 +20,19 @@ export function SiteHeader() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-2.5 text-espresso-800"
+          className="flex min-w-0 items-center gap-2.5 text-espresso-800"
           onClick={() => setOpen(false)}
         >
           <Image
             src="/logo.png"
             alt="Caffi3ne"
-            width={52}
-            height={52}
-            className="rounded-full object-cover sm:h-[68px] sm:w-[68px]"
+            width={44}
+            height={44}
+            className="shrink-0 rounded-full object-cover sm:h-[52px] sm:w-[52px]"
           />
-          <div>
+          <div className="min-w-0">
             <div className="font-display text-base tracking-wide sm:text-lg">Caffi3ne</div>
-            <div className="text-[10px] uppercase tracking-[0.28em] text-espresso-400 sm:text-xs">
+            <div className="truncate text-[9px] uppercase tracking-[0.22em] text-espresso-400 sm:text-[10px] sm:tracking-[0.28em]">
               Coffee Intelligence
             </div>
           </div>
