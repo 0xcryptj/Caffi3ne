@@ -63,8 +63,7 @@ body {
   height: 22px;
   border-radius: 50%;
   background: #452815;
-  border: 3px solid #fff;
+  border: none;
   box-shadow: 0 1px 6px rgba(38, 25, 14, 0.35);
   cursor: pointer;
-  border: none;
 }
