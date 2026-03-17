@@ -88,10 +88,10 @@ const config: Config = {
         }
       },
       animation: {
-        "fade-up":        "fade-up 0.65s cubic-bezier(0.22,1,0.36,1) both",
-        "fade-in":        "fade-in 0.55s ease-out both",
-        "scale-in":       "scale-in 0.55s cubic-bezier(0.22,1,0.36,1) both",
-        "slide-up":       "slide-up 0.65s cubic-bezier(0.22,1,0.36,1) both",
+        "fade-up":        "fade-up 0.90s cubic-bezier(0.22,1,0.36,1) both",
+        "fade-in":        "fade-in 0.75s ease-out both",
+        "scale-in":       "scale-in 0.75s cubic-bezier(0.22,1,0.36,1) both",
+        "slide-up":       "slide-up 0.90s cubic-bezier(0.22,1,0.36,1) both",
         "pop-in":         "pop-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both",
         "slide-in-right": "slide-in-right 0.60s cubic-bezier(0.22,1,0.36,1) both",
         "float":          "float 5s ease-in-out infinite",

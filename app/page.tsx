@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Database, MapPinned, Store, Waves } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
 import { DitherBean } from "@/components/dither-bean";
-import { DitherSteam } from "@/components/dither-steam";
+import { DitherBg } from "@/components/dither-bg-client";
 import { RotatingText } from "@/components/rotating-text";
 import { BlurText } from "@/components/blur-text";
 import { SpotlightCard } from "@/components/spotlight-card";
@@ -52,18 +52,33 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Dither steam — rises from bottom of hero */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-full opacity-20">
-          <DitherSteam color={[90, 48, 18]} alpha={130} />
+        {/* Dither steam — WebGL Perlin noise, rises through hero */}
+        <div className="pointer-events-none absolute inset-0 -z-10 opacity-25">
+          <DitherBg
+            waveSpeed={0.010}
+            waveFrequency={1.5}
+            waveAmplitude={0.30}
+            waveColor={[0.50, 0.22, 0.06]}
+            colorNum={2}
+            pixelSize={8}
+          />
         </div>
 
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-28">
 
           {/* Left: two dithered coffee beans */}
           <div className="relative flex items-center justify-center lg:min-h-[480px]">
-            <DitherBean displaySize={340} rotate={-10} className="relative z-10" />
+            <DitherBean
+              displaySize={340}
+              rotate={-10}
+              className="relative z-10 w-[clamp(160px,38vw,300px)] sm:w-[clamp(200px,36vw,320px)] lg:w-[clamp(240px,22vw,340px)]"
+            />
             <div className="absolute -bottom-2 right-0 z-20 sm:-bottom-4 sm:right-4 lg:-bottom-6 lg:right-0">
-              <DitherBean displaySize={200} rotate={28} />
+              <DitherBean
+                displaySize={200}
+                rotate={28}
+                className="w-[clamp(90px,22vw,170px)] sm:w-[clamp(110px,18vw,185px)] lg:w-[clamp(120px,11vw,200px)]"
+              />
             </div>
           </div>
 
@@ -104,8 +119,9 @@ export default function LandingPage() {
                 <RotatingText
                   texts={["coffee shop", "café", "roastery", "espresso bar"]}
                   mainClassName="text-espresso-500 italic font-display"
-                  rotationInterval={3800}
-                  staggerDuration={0.045}
+                  transition={{ type: "spring", damping: 20, stiffness: 180 }}
+                  rotationInterval={5000}
+                  staggerDuration={0.065}
                 />
               </span>
               {" "}near you, right now.
@@ -117,7 +133,7 @@ export default function LandingPage() {
             >
               <BlurText
                 text="Caffi3ne gives you live crowd intelligence, ratings, and hours for every cafe around you — so you always know where to go."
-                delay={100}
+                delay={130}
                 animateBy="words"
                 direction="bottom"
                 className="max-w-xl text-sm leading-7 text-espresso-600 sm:text-base sm:leading-8"

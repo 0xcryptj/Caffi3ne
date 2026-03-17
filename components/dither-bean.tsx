@@ -48,15 +48,28 @@ function renderBean(canvas: HTMLCanvasElement, displaySize: number) {
       if (depth === 0) continue;
 
       // Shading
-      const spherical   = Math.pow(depth, 0.6) * 0.78;
-      const dir         = Math.max(0, -nx * 0.50 - ny * 0.60) * 0.45;
-      const creaseX     = Math.sin(ny * Math.PI * 0.55) * 0.11;
-      const dCrease     = Math.abs(nx - creaseX);
-      const cWidth      = 0.10 * (1 - Math.abs(ny) * 0.45);
-      const creaseShadow = nx > creaseX && dCrease < cWidth * 2.5
-        ? -0.22 * (1 - dCrease / (cWidth * 2.5)) : 0;
-      const creaseGlow  = dCrease < cWidth ? 0.15 * (1 - dCrease / cWidth) : 0;
-      const rim         = depth < 0.15 ? -0.35 * (1 - depth / 0.15) : 0;
+      const spherical   = Math.pow(depth, 0.6) * 0.76;
+      const dir         = Math.max(0, -nx * 0.48 - ny * 0.58) * 0.42;
+
+      // ── Crease — the defining feature of a coffee bean ────────────────
+      // S-curve running pole-to-pole, shifted slightly right of centre
+      const creaseX  = Math.sin(ny * Math.PI * 0.60) * 0.12 + 0.04;
+      const dCrease  = Math.abs(nx - creaseX);
+      // Crease width: widest at equator, tapers toward tips
+      const cWidth   = 0.13 * Math.pow(1 - Math.abs(ny) * 0.80, 0.5);
+
+      // 1. Dark groove — wide shadow on the right side of the crease line
+      const shadowWidth = cWidth * 3.2;
+      const creaseShadow = (nx > creaseX - cWidth * 0.5 && dCrease < shadowWidth)
+        ? -0.42 * (1 - dCrease / shadowWidth)
+        : 0;
+      // 2. Bright ridge — narrow highlight on the left (lit) side
+      const ridgeWidth = cWidth * 0.8;
+      const creaseGlow = (nx < creaseX && dCrease < ridgeWidth)
+        ? 0.28 * (1 - dCrease / ridgeWidth)
+        : 0;
+
+      const rim         = depth < 0.15 ? -0.38 * (1 - depth / 0.15) : 0;
       const specDist    = Math.sqrt((nx + 0.26) ** 2 + (ny + 0.30) ** 2);
       const spec        = Math.max(0, 1 - specDist / 0.20) ** 3 * 0.22;
 
@@ -89,7 +102,7 @@ export function DitherBean({ displaySize = 340, rotate = 0, className = "" }: Di
   return (
     <motion.div
       className={`select-none ${className}`}
-      style={{ cursor: "pointer", originX: "50%", originY: "50%" }}
+      style={{ cursor: "pointer", originX: "50%", originY: "50%", aspectRatio: "1" }}
       // When hovered: looping float + rock. When not hovered: snap back.
       animate={
         hovered
@@ -115,8 +128,8 @@ export function DitherBean({ displaySize = 340, rotate = 0, className = "" }: Di
         ref={canvasRef}
         style={{
           imageRendering: "pixelated",
-          width: displaySize,
-          height: displaySize,
+          width: "100%",
+          height: "100%",
           display: "block",
         }}
       />

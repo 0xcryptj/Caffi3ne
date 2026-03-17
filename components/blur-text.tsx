@@ -52,8 +52,8 @@ export function BlurText({
     { filter: "blur(0px)", opacity: 1, y: 0 },
   ];
 
-  const duration = 0.55;
-  const times = [0, 0.5, 1];
+  const duration = 0.85;
+  const times = [0, 0.45, 1];
 
   return (
     <p ref={ref} className={`flex flex-wrap ${className}`}>
