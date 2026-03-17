@@ -102,10 +102,10 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             {/* Name + logo row */}
             <div className="mt-3 flex items-start gap-3">
               <div className="min-w-0 flex-1">
-                <h1 className="font-display text-2xl leading-tight text-espresso-900 sm:text-3xl lg:text-4xl xl:text-5xl">
+                <h1 className="break-words font-display text-2xl leading-tight text-espresso-900 sm:text-3xl lg:text-4xl xl:text-5xl">
                   {shop.name}
                 </h1>
-                <p className="mt-2 text-sm leading-relaxed text-espresso-600 sm:text-base">{shop.address}</p>
+                <p className="mt-2 break-words text-sm leading-relaxed text-espresso-600 sm:text-base">{shop.address}</p>
               </div>
               <ShopLogo website={shop.website} name={shop.name} size="lg" />
             </div>
@@ -200,7 +200,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
               )}
               <div className="flex items-start gap-2.5 rounded-xl border border-espresso-100 p-3.5 sm:rounded-2xl sm:p-4">
                 <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-espresso-500" />
-                <span className="leading-relaxed">{shop.address}</span>
+                <span className="break-words leading-relaxed">{shop.address}</span>
               </div>
               {shop.website && (
                 <div className="flex items-center gap-2.5 rounded-xl border border-espresso-100 p-3.5 sm:rounded-2xl sm:p-4">

@@ -51,7 +51,7 @@ export function PhotoGrid({ photos, shopName }: PhotoGridProps) {
 
   // 3+ — magazine: large left + two stacked right
   return (
-    <div className="mb-5 grid h-48 grid-cols-[3fr_2fr] gap-1 overflow-hidden rounded-2xl animate-fade-in sm:mb-7 sm:h-64 sm:gap-1.5 sm:rounded-3xl lg:h-80">
+    <div className="mb-5 grid h-48 grid-cols-[2fr_1fr] gap-1 overflow-hidden rounded-2xl animate-fade-in sm:mb-7 sm:h-64 sm:grid-cols-[3fr_2fr] sm:gap-1.5 sm:rounded-3xl lg:h-80">
       <Cell name={photos[0]} alt={`${shopName} · main`} className="group h-full" />
       <div className="flex flex-col gap-1 sm:gap-1.5">
         <Cell name={photos[1]} alt={`${shopName} · 2`} className="group flex-1" />

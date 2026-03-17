@@ -59,8 +59,8 @@ export default function LandingPage() {
 
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-28">
 
-          {/* Left: two dithered coffee beans */}
-          <div className="relative flex items-center justify-center lg:min-h-[480px]">
+          {/* Left: two dithered coffee beans — hidden on mobile to keep hero compact */}
+          <div className="relative hidden items-center justify-center sm:flex lg:min-h-[480px]">
             <DitherBean
               displaySize={340}
               rotate={-10}
@@ -79,7 +79,7 @@ export default function LandingPage() {
           <div className="space-y-7">
 
             <div
-              className="animate-fade-up inline-flex rounded-full border border-espresso-200 bg-crema/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-espresso-600 backdrop-blur-sm"
+              className="animate-fade-up inline-flex rounded-full border border-espresso-200 bg-crema/80 px-4 py-2 text-xs font-semibold uppercase tracking-normal sm:tracking-[0.32em] text-espresso-600 backdrop-blur-sm"
               style={{ animationDelay: "0ms", animationFillMode: "both" }}
             >
               Coffee Intelligence Platform

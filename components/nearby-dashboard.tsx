@@ -195,10 +195,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     }
   };
 
-  const radiusLabel =
-    radius === 0 ? "Off"
-    : radius < 1 ? `${Math.round(radius * 5280)} ft`
-    : `${radius} mi`;
+  const radiusLabel = radius === 0 ? "Off" : `${radius} mi`;
 
   const sliderPct = (radius / 25) * 100;
 
@@ -222,7 +219,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
           <div className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
             <div className="flex min-w-0 items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5">
               <LocateFixed className="h-3.5 w-3.5 shrink-0 text-espresso-500" />
-              <span className="min-w-0 max-w-[180px] truncate text-xs text-espresso-700">{status}</span>
+              <span className="min-w-0 max-w-[160px] truncate text-xs text-espresso-700">{status}</span>
             </div>
             {weather && (
               <div className="flex items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5 text-xs text-espresso-700">
@@ -237,7 +234,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         </div>
 
         {/* ── Location mode toggle ──────────────────────────────────────── */}
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           <button
             onClick={() => { if (locationMode === "gps") requestGPS(); else switchMode("gps"); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
@@ -277,7 +274,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
             <button
               onClick={handleZipSearch}
               disabled={zipLoading || !zipInput.trim()}
-              className="flex items-center gap-1.5 rounded-xl bg-espresso-800 px-4 py-2.5 text-sm font-semibold text-crema transition hover:bg-espresso-900 disabled:opacity-50"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-espresso-800 px-4 py-2.5 text-sm font-semibold text-crema transition hover:bg-espresso-900 disabled:opacity-50"
             >
               {zipLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-crema/30 border-t-crema" />
@@ -290,7 +287,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         )}
 
         {/* ── Radius slider ─────────────────────────────────────────────── */}
-        <div className="mt-4 rounded-2xl bg-espresso-50 px-3 py-3.5 sm:px-4 sm:py-4">
+        <div className="mt-4 w-full min-w-0 rounded-2xl bg-espresso-50 px-3 py-3.5 sm:px-4 sm:py-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-xs font-medium text-espresso-700 sm:text-sm">Search radius</span>
             <span className="rounded-full bg-espresso-900 px-2.5 py-0.5 text-xs font-semibold text-crema tabular-nums">
@@ -301,7 +298,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
             type="range"
             min={0}
             max={25}
-            step={0.5}
+            step={1}
             value={radius}
             onChange={(e) => handleRadiusChange(Number(e.target.value))}
             className="radius-slider"

@@ -26,7 +26,7 @@ function PhotoItem({ name, shopName, index }: { name: string; shopName: string; 
 export function PhotoStrip({ photos, shopName }: PhotoStripProps) {
   if (photos.length === 0) return null;
   return (
-    <div className="mb-8 flex gap-3 overflow-x-auto pb-2">
+    <div className="mb-8 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {photos.slice(0, 4).map((name, i) => (
         <PhotoItem key={name} name={name} shopName={shopName} index={i} />
       ))}

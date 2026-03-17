@@ -21,6 +21,10 @@ body {
   color: #321c0f;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 * {
   border-color: rgba(209, 174, 134, 0.55);
 }

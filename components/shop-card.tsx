@@ -24,7 +24,7 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
   return (
     <Link
       href={`/shops/${shop.id}`}
-      className={`group flex min-w-0 items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-4 ${shop.isOpenNow === false ? "opacity-60" : ""}`}
+      className={`group flex w-full min-w-0 items-start gap-3 rounded-2xl border border-espresso-100 bg-white p-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-espresso-200 hover:shadow-[0_8px_30px_rgba(38,25,14,0.10)] animate-fade-up sm:p-4 ${shop.isOpenNow === false ? "opacity-60" : ""}`}
       style={{ animationDelay: `${index * 55}ms`, animationFillMode: "both" }}
     >
       <ShopLogo website={shop.website} name={shop.name} />
