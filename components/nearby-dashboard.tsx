@@ -91,18 +91,21 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     [doFetch, fetchWeather]
   );
 
-  // On mount (and when returning to GPS mode): use IP-based location only.
-  // IP location respects VPN. GPS is only requested when the user explicitly
-  // clicks the GPS button — navigator.geolocation uses OS location services
-  // which bypass VPN and would report the physical location instead.
+  // On mount (and when returning to GPS mode):
+  // 1. Auto-request precise GPS — browser will prompt the user for permission.
+  //    GPS gives accurate street-level location (unlike IP which can be off by miles).
+  // 2. Simultaneously fetch IP location as an instant fallback so the UI isn't
+  //    blank while the permission dialog is pending or if GPS is denied.
+  // 3. applyLocation's gpsResolvedRef guard ensures GPS always wins over IP.
   useEffect(() => {
     if (locationMode !== "gps") return;
 
     gpsResolvedRef.current = false;
     locationReadyRef.current = false;
     coordsRef.current = null;
+    setStatus("Requesting your location…");
 
-    // IP-based location (instant, respects VPN)
+    // IP location: resolves instantly, used as fallback
     fetch("/api/location")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((loc: IpLocation) => {
@@ -112,14 +115,28 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         applyLocation(loc.lat, loc.lng, label, false);
       })
       .catch(() => {
-        setStatus("Location unavailable — try ZIP search");
+        if (!locationReadyRef.current) setStatus("Location unavailable — try ZIP search");
       });
+
+    // GPS: precise location — overwrites IP result once user grants permission
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          applyLocation(pos.coords.latitude, pos.coords.longitude, "Using your location", true);
+        },
+        () => {
+          // Denied or timed out — IP fallback stays, no further action needed
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    }
   }, [applyLocation, locationMode]);
 
-  // Explicitly request device GPS — only called when user clicks the GPS button.
+  // Re-request GPS — called when user explicitly taps the GPS button.
+  // Useful if they denied on first load and want to retry, or to refresh location.
   const requestGPS = useCallback(() => {
     if (!navigator.geolocation) {
-      if (!locationReadyRef.current) setStatus("GPS not available — try ZIP search");
+      setStatus("GPS not available — try ZIP search");
       return;
     }
     setStatus("Requesting GPS…");
@@ -129,7 +146,8 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
       },
       () => {
         if (!locationReadyRef.current) setStatus("Location unavailable — try ZIP search");
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [applyLocation]);
 
@@ -221,7 +239,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         {/* ── Location mode toggle ──────────────────────────────────────── */}
         <div className="mt-5 flex gap-2">
           <button
-            onClick={() => { switchMode("gps"); requestGPS(); }}
+            onClick={() => { if (locationMode === "gps") requestGPS(); else switchMode("gps"); }}
             className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
               locationMode === "gps"
                 ? "bg-espresso-800 text-crema shadow-sm"
