@@ -52,16 +52,9 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* Dither steam — WebGL Perlin noise, rises through hero */}
-        <div className="pointer-events-none absolute inset-0 -z-10 opacity-25">
-          <DitherBg
-            waveSpeed={0.010}
-            waveFrequency={1.5}
-            waveAmplitude={0.30}
-            waveColor={[0.50, 0.22, 0.06]}
-            colorNum={2}
-            pixelSize={8}
-          />
+        {/* Dither steam — WebGL Perlin noise, cream bg + brown pixels */}
+        <div className="absolute inset-0 -z-10">
+          <DitherBg />
         </div>
 
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-28">

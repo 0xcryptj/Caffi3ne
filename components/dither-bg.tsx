@@ -17,7 +17,7 @@ void main() {
 }
 `;
 
-// ── Wave fragment shader (Perlin fbm) ─────────────────────────────────────
+// ── Wave fragment shader (Perlin fbm + cream bg + mouse glow) ─────────────
 const waveFrag = `
 precision highp float;
 uniform vec2  resolution;
@@ -26,6 +26,10 @@ uniform float waveSpeed;
 uniform float waveFrequency;
 uniform float waveAmplitude;
 uniform vec3  waveColor;
+uniform vec3  bgColor;
+uniform vec2  mousePos;
+uniform float mouseRadius;
+uniform vec3  mouseColor;
 
 vec4 mod289(vec4 x){return x-floor(x*(1./289.))*289.;}
 vec4 permute(vec4 x){return mod289(((x*34.)+1.)*x);}
@@ -69,8 +73,18 @@ void main(){
   vec2 uv=gl_FragCoord.xy/resolution.xy;
   uv-=.5;
   uv.x*=resolution.x/resolution.y;
-  float f=pattern(uv);
-  vec3 col=mix(vec3(0.),waveColor,f);
+  float f=clamp(pattern(uv)*0.75,0.,1.);
+  vec3 col=mix(bgColor,waveColor,f);
+
+  // Mouse glow — smooth radial highlight following cursor
+  if(mousePos.x>=0.0){
+    vec2 mp=mousePos-0.5;
+    mp.x*=resolution.x/resolution.y;
+    float d=length(uv-mp);
+    float mask=smoothstep(mouseRadius,0.0,d);
+    col=mix(col,mouseColor,mask*0.88);
+  }
+
   gl_FragColor=vec4(col,1.);
 }
 `;
@@ -94,11 +108,10 @@ vec3 dither(vec2 uv,vec3 color){
   vec2 sc=floor(uv*resolution/pixelSize);
   int x=int(mod(sc.x,8.));
   int y=int(mod(sc.y,8.));
-  float thr=bayerMatrix8x8[y*8+x]-.25;
+  float thr=bayerMatrix8x8[y*8+x]-.5;
   float step=1./(colorNum-1.);
   color+=thr*step;
-  float bias=0.2;
-  color=clamp(color-bias,0.,1.);
+  color=clamp(color,0.,1.);
   return floor(color*(colorNum-1.)+.5)/(colorNum-1.);
 }
 void mainImage(in vec4 inputColor,in vec2 uv,out vec4 outputColor){
@@ -142,13 +155,20 @@ interface WaveProps {
   waveFrequency: number;
   waveAmplitude: number;
   waveColor: [number, number, number];
+  bgColor: [number, number, number];
+  mouseRadius: number;
+  mouseColor: [number, number, number];
   colorNum: number;
   pixelSize: number;
 }
 
-function DitheredWaves({ waveSpeed, waveFrequency, waveAmplitude, waveColor, colorNum, pixelSize }: WaveProps) {
-  const mesh = useRef<THREE.Mesh>(null);
+function DitheredWaves({
+  waveSpeed, waveFrequency, waveAmplitude,
+  waveColor, bgColor, mouseRadius, mouseColor,
+  colorNum, pixelSize,
+}: WaveProps) {
   const { viewport, size, gl } = useThree();
+  const mousePosVec = useRef(new THREE.Vector2(-1, -1));
 
   const uniforms = useRef({
     time:          new THREE.Uniform(0),
@@ -157,8 +177,13 @@ function DitheredWaves({ waveSpeed, waveFrequency, waveAmplitude, waveColor, col
     waveFrequency: new THREE.Uniform(waveFrequency),
     waveAmplitude: new THREE.Uniform(waveAmplitude),
     waveColor:     new THREE.Uniform(new THREE.Color(...waveColor)),
+    bgColor:       new THREE.Uniform(new THREE.Color(...bgColor)),
+    mousePos:      new THREE.Uniform(mousePosVec.current),
+    mouseRadius:   new THREE.Uniform(mouseRadius),
+    mouseColor:    new THREE.Uniform(new THREE.Color(...mouseColor)),
   });
 
+  // Resolution update
   useEffect(() => {
     const dpr = gl.getPixelRatio();
     uniforms.current.resolution.value.set(
@@ -167,17 +192,39 @@ function DitheredWaves({ waveSpeed, waveFrequency, waveAmplitude, waveColor, col
     );
   }, [size, gl]);
 
+  // Mouse tracking — updates the shared Vector2 ref (uniform reads same object)
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const onMove = (e: PointerEvent) => {
+      const r = canvas.getBoundingClientRect();
+      mousePosVec.current.set(
+        (e.clientX - r.left) / r.width,
+        1.0 - (e.clientY - r.top) / r.height   // flip Y for GL coords
+      );
+    };
+    const onLeave = () => mousePosVec.current.set(-1, -1);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerleave", onLeave);
+    return () => {
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerleave", onLeave);
+    };
+  }, [gl]);
+
   useFrame(({ clock }) => {
-    uniforms.current.time.value = clock.getElapsedTime();
+    uniforms.current.time.value          = clock.getElapsedTime();
     uniforms.current.waveSpeed.value     = waveSpeed;
     uniforms.current.waveFrequency.value = waveFrequency;
     uniforms.current.waveAmplitude.value = waveAmplitude;
     uniforms.current.waveColor.value.set(...waveColor);
+    uniforms.current.bgColor.value.set(...bgColor);
+    uniforms.current.mouseRadius.value   = mouseRadius;
+    uniforms.current.mouseColor.value.set(...mouseColor);
   });
 
   return (
     <>
-      <mesh ref={mesh} scale={[viewport.width, viewport.height, 1]}>
+      <mesh scale={[viewport.width, viewport.height, 1]}>
         <planeGeometry args={[1, 1]} />
         <shaderMaterial
           vertexShader={waveVert}
@@ -198,18 +245,24 @@ interface DitherBgProps {
   waveFrequency?: number;
   waveAmplitude?: number;
   waveColor?: [number, number, number];
+  bgColor?: [number, number, number];
+  mouseRadius?: number;
+  mouseColor?: [number, number, number];
   colorNum?: number;
   pixelSize?: number;
   className?: string;
 }
 
 export default function DitherBg({
-  waveSpeed     = 0.018,
-  waveFrequency = 2.2,
-  waveAmplitude = 0.28,
-  waveColor     = [0.52, 0.24, 0.07],
-  colorNum      = 3,
-  pixelSize     = 6,
+  waveSpeed     = 0.02,
+  waveFrequency = 5.0,
+  waveAmplitude = 0.25,
+  waveColor     = [0.42, 0.20, 0.05],
+  bgColor       = [0.984, 0.973, 0.953],
+  mouseRadius   = 1.0,
+  mouseColor    = [1.0, 1.0, 1.0],
+  colorNum      = 4,
+  pixelSize     = 2,
   className     = "",
 }: DitherBgProps) {
   return (
@@ -224,6 +277,9 @@ export default function DitherBg({
         waveFrequency={waveFrequency}
         waveAmplitude={waveAmplitude}
         waveColor={waveColor}
+        bgColor={bgColor}
+        mouseRadius={mouseRadius}
+        mouseColor={mouseColor}
         colorNum={colorNum}
         pixelSize={pixelSize}
       />
