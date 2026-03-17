@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Coffee, LocateFixed, MapPin, Search } from "lucide-react";
+import { Coffee, LayoutList, LocateFixed, Map, MapPin, Search } from "lucide-react";
 import { MapPanel } from "@/components/map-panel";
 import { ShopCard } from "@/components/shop-card";
 import type { ShopWithInsight } from "@/lib/types";
@@ -33,6 +33,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [radius, setRadius] = useState(0);
   const [loading, setLoading] = useState(false);
   const [locationMode, setLocationMode] = useState<LocationMode>("gps");
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [zipInput, setZipInput] = useState("");
   const [zipLoading, setZipLoading] = useState(false);
 
@@ -316,37 +317,75 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
 
       {/* ── Results ──────────────────────────────────────────────────────── */}
       {radius > 0 && (
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-          {/* List */}
-          <div className="space-y-3">
-            {loading && shops.length === 0 && (
-              <div className="space-y-3">
-                {[0, 1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-[88px] animate-pulse rounded-2xl bg-espresso-50"
-                    style={{ animationDelay: `${i * 80}ms` }}
-                  />
-                ))}
-              </div>
-            )}
-            {!loading && shops.length === 0 && (
-              <div className="rounded-2xl border border-espresso-100 bg-white p-8 text-center animate-fade-in">
-                <MapPin className="mx-auto mb-3 h-7 w-7 text-espresso-300" />
-                <p className="text-espresso-600">No shops found within {radiusLabel}.</p>
-                <p className="mt-1 text-sm text-espresso-400">Try increasing the radius.</p>
-              </div>
-            )}
-            {shops.map((shop, index) => (
-              <ShopCard key={shop.id} shop={shop} index={index} />
-            ))}
+        <>
+          {/* Mobile List / Map toggle — hidden on desktop */}
+          <div className="flex gap-1 rounded-2xl bg-espresso-50 p-1 lg:hidden">
+            <button
+              onClick={() => setMobileView("list")}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                mobileView === "list"
+                  ? "bg-white text-espresso-900 shadow-sm"
+                  : "text-espresso-500 hover:text-espresso-700"
+              }`}
+            >
+              <LayoutList className="h-4 w-4" />
+              List
+              {shops.length > 0 && (
+                <span className="rounded-full bg-espresso-100 px-1.5 py-0.5 text-[10px] font-bold text-espresso-600 tabular-nums">
+                  {shops.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setMobileView("map")}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
+                mobileView === "map"
+                  ? "bg-white text-espresso-900 shadow-sm"
+                  : "text-espresso-500 hover:text-espresso-700"
+              }`}
+            >
+              <Map className="h-4 w-4" />
+              Map
+            </button>
           </div>
 
-          {/* Map — hidden on mobile when no shops */}
-          <div className={shops.length === 0 && !loading ? "hidden lg:block" : "animate-fade-in"}>
-            <MapPanel shops={shops} />
+          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            {/* List — full width on mobile (hidden when map tab active), left col on desktop */}
+            <div className={mobileView === "map" ? "hidden lg:block" : "block"}>
+              <div className="space-y-3">
+                {loading && shops.length === 0 && (
+                  <div className="space-y-3">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="h-[88px] animate-pulse rounded-2xl bg-espresso-50"
+                        style={{ animationDelay: `${i * 80}ms` }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {!loading && shops.length === 0 && (
+                  <div className="rounded-2xl border border-espresso-100 bg-white p-8 text-center animate-fade-in">
+                    <MapPin className="mx-auto mb-3 h-7 w-7 text-espresso-300" />
+                    <p className="text-espresso-600">No shops found within {radiusLabel}.</p>
+                    <p className="mt-1 text-sm text-espresso-400">Try increasing the radius.</p>
+                  </div>
+                )}
+                {shops.map((shop, index) => (
+                  <ShopCard key={shop.id} shop={shop} index={index} />
+                ))}
+              </div>
+            </div>
+
+            {/* Map — full viewport height on mobile (hidden when list tab active), right col on desktop */}
+            <div className={`${mobileView === "list" ? "hidden lg:block" : "block"} animate-fade-in`}>
+              <MapPanel
+                shops={shops}
+                mapHeight="h-[calc(100svh-200px)] lg:h-[420px]"
+              />
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

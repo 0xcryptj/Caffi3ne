@@ -5,6 +5,8 @@ import type { ShopWithInsight } from "@/lib/types";
 
 interface MapPanelProps {
   shops: ShopWithInsight[];
+  /** Tailwind height class(es) for the inner map container — overrides the default fixed heights */
+  mapHeight?: string;
 }
 
 function scoreToColor(score: number) {
@@ -80,7 +82,7 @@ const COFFEE_MAP_STYLE = [
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4a7a73" }] }
 ];
 
-export function MapPanel({ shops }: MapPanelProps) {
+export function MapPanel({ shops, mapHeight }: MapPanelProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [heatmapOn, setHeatmapOn] = useState(false);
@@ -237,7 +239,7 @@ export function MapPanel({ shops }: MapPanelProps) {
         <h3 className="mt-1 font-display text-xl text-espresso-900 sm:text-2xl">Coffee density snapshot</h3>
       </div>
 
-      <div className="relative overflow-hidden rounded-[1.5rem] border border-white/60 h-64 sm:h-80 lg:h-[420px]">
+      <div className={`relative overflow-hidden rounded-[1.5rem] border border-white/60 ${mapHeight ?? "h-64 sm:h-80 lg:h-[420px]"}`}>
         <div ref={mapRef} className="h-full w-full" />
         {status === "loading" && (
           <div className="absolute inset-0 grid place-items-center bg-[#e8dcc8]">
