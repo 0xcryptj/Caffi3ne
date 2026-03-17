@@ -64,13 +64,13 @@ export default function LandingPage() {
             <DitherBean
               displaySize={340}
               rotate={-10}
-              className="relative z-10 w-[clamp(160px,38vw,300px)] sm:w-[clamp(200px,36vw,320px)] lg:w-[clamp(240px,22vw,340px)]"
+              className="relative z-10 w-[clamp(120px,26vw,220px)] sm:w-[clamp(140px,24vw,240px)] lg:w-[clamp(160px,15vw,260px)]"
             />
             <div className="absolute -bottom-2 right-0 z-20 sm:-bottom-4 sm:right-4 lg:-bottom-6 lg:right-0">
               <DitherBean
                 displaySize={200}
                 rotate={28}
-                className="w-[clamp(90px,22vw,170px)] sm:w-[clamp(110px,18vw,185px)] lg:w-[clamp(120px,11vw,200px)]"
+                className="w-[clamp(65px,15vw,120px)] sm:w-[clamp(75px,12vw,135px)] lg:w-[clamp(85px,8vw,150px)]"
               />
             </div>
           </div>
