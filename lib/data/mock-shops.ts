@@ -1,4 +1,4 @@
-import { calculateCrowdScore } from "@/lib/crowd-score";
+import { calculateCrowdScore, estimateWait } from "@/lib/crowd-score";
 import type {
   CrowdInsight,
   ExternalSignals,
@@ -114,6 +114,7 @@ export function getMockInsightForShop(shopId: string): CrowdInsight {
   return {
     score: result.score,
     label: result.label,
+    waitMinutes: estimateWait(result.score, breakdown.timeScore),
     breakdown,
     explanation: [
       "Traffic conditions suggest current demand near this location.",

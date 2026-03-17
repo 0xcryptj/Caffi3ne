@@ -1,4 +1,4 @@
-import { calculateCrowdScore, toLabel } from "@/lib/crowd-score";
+import { calculateCrowdScore, estimateWait, toLabel } from "@/lib/crowd-score";
 import { clamp } from "@/lib/utils";
 import { getMockInsightForShop } from "@/lib/data/mock-shops";
 import { getTrafficSignal } from "@/lib/services/traffic";
@@ -57,6 +57,7 @@ export function getDayScore(utcOffsetMinutes?: number, now = new Date()): number
 const CLOSED_INSIGHT: CrowdInsight = {
   score: 0,
   label: "Below Average",
+  waitMinutes: null,
   breakdown: {
     weatherScore: 0,
     trafficScore: 0,
@@ -105,6 +106,7 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
   return {
     score: finalScore,
     label: finalLabel,
+    waitMinutes: estimateWait(finalScore, breakdown.timeScore),
     breakdown,
     explanation: [
       "Live score blends weather, traffic, and temporal demand signals.",

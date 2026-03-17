@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Clock } from "lucide-react";
 import type { BusynessLabel, ShopWithInsight } from "@/lib/types";
 import { formatDistance, formatScore } from "@/lib/utils";
 import { ShopLogo } from "@/components/shop-logo";
@@ -67,7 +68,14 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
             </span>
           )}
 
-          {hours && (
+          {shop.insight.waitMinutes && (
+            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs tabular-nums text-espresso-500">
+              <Clock className="h-3 w-3 shrink-0" />
+              {shop.insight.waitMinutes.label}
+            </span>
+          )}
+
+          {!shop.insight.waitMinutes && hours && (
             <span className="ml-auto hidden truncate text-xs text-espresso-400 sm:inline">{hours}</span>
           )}
         </div>

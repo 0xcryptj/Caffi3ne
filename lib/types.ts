@@ -40,9 +40,16 @@ export interface ExternalSignals {
   rawInputs: Record<string, unknown>;
 }
 
+export interface WaitEstimate {
+  low: number;   // minutes, lower bound
+  high: number;  // minutes, upper bound
+  label: string; // display string e.g. "5–10 min"
+}
+
 export interface CrowdInsight {
   score: number;
   label: BusynessLabel;
+  waitMinutes: WaitEstimate | null; // null when shop is closed
   breakdown: ExternalSignals;
   explanation: string[];
   updatedAt: string;
