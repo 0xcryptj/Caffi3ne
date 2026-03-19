@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Car, Clock, Clock3, DollarSign, ExternalLink, Globe, MapPin, Navigation, Package, Phone, ShoppingBag, Sparkles, TrendingUp, UtensilsCrossed, Wind } from "lucide-react";
+import { ArrowRight, Car, Clock, Clock3, DollarSign, ExternalLink, Globe, MapPin, Navigation, Phone, ShoppingBag, Sparkles, TrendingUp, UtensilsCrossed, Wind } from "lucide-react";
 import { PhotoGrid } from "@/components/photo-grid";
 import { ShopLogo } from "@/components/shop-logo";
 import { PopularTimesChart } from "@/components/popular-times-chart";
@@ -268,116 +268,130 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           {/* ── Order Online ───────────────────────────────────────────────── */}
-          {hasAnyOrdering && (
-            <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="h-4 w-4 text-espresso-400 sm:h-5 sm:w-5" />
-                <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">Order Online</h2>
-              </div>
-              <p className="mt-1 text-xs text-espresso-400">Choose how you want your order</p>
+          {hasAnyOrdering && (() => {
+            const deliveryProviders = [
+              {
+                name: "DoorDash",
+                fee: "Service fee 15%",
+                deliveryFee: "Delivery fee $2.99+",
+                time: "25–40 min",
+                href: `https://www.doordash.com/search/store/${encodeURIComponent(shop.name)}`,
+                dot: "#FF3008",
+              },
+              {
+                name: "Uber Eats",
+                fee: "Service fee 5–15%",
+                deliveryFee: "Delivery fee $0.49+",
+                time: "20–35 min",
+                href: `https://www.ubereats.com/search?q=${encodeURIComponent(shop.name)}`,
+                dot: "#000000",
+              },
+              {
+                name: "Grubhub",
+                fee: "Service fee 5–15%",
+                deliveryFee: "Delivery fee $1+",
+                time: "30–50 min",
+                href: `https://www.grubhub.com/delivery?q=${encodeURIComponent(shop.name)}`,
+                dot: "#F6471D",
+              },
+            ];
+            return (
+              <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="h-4 w-4 text-espresso-400 sm:h-5 sm:w-5" />
+                  <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">Order Online</h2>
+                </div>
+                <p className="mt-1 text-xs text-espresso-400">Place order with a delivery service</p>
 
-              {/* Delivery + Pickup tiles */}
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-
-                {/* Delivery tile */}
-                {(ordering!.delivery || ordering!.ordersUri) && (
-                  <a
-                    href={googleMapsOrderUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex flex-col justify-between rounded-2xl border border-espresso-100 bg-espresso-50 p-4 transition hover:border-espresso-300 hover:bg-crema sm:rounded-3xl"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Package className="h-4 w-4 text-espresso-600" />
-                          <span className="text-sm font-semibold text-espresso-900">Delivery</span>
-                        </div>
-                        <ExternalLink className="h-3.5 w-3.5 text-espresso-400 transition group-hover:text-espresso-700" />
-                      </div>
-                      <p className="mt-1.5 text-xs text-espresso-500">
-                        Delivered to your door via
-                      </p>
-                      {/* Provider name badges */}
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {["DoorDash", "Uber Eats"].map((p) => (
-                          <span key={p} className="rounded-full border border-espresso-200 bg-white px-2 py-0.5 text-[10px] font-medium text-espresso-600">
-                            {p}
-                          </span>
-                        ))}
-                        <span className="rounded-full border border-espresso-200 bg-white px-2 py-0.5 text-[10px] font-medium text-espresso-400">
-                          + more
-                        </span>
-                      </div>
+                {/* ── Delivery providers list ────────────────────────────── */}
+                {ordering!.delivery && (
+                  <div className="mt-5">
+                    <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-espresso-400">Delivery</p>
+                    <div className="overflow-hidden rounded-2xl border border-espresso-100 divide-y divide-espresso-100">
+                      {deliveryProviders.map((p) => (
+                        <a
+                          key={p.name}
+                          href={p.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-center gap-3 bg-white px-4 py-3.5 transition hover:bg-espresso-50"
+                        >
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: p.dot }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-espresso-900">{p.name}</p>
+                            <p className="mt-0.5 text-xs text-espresso-400">{p.fee} · {p.deliveryFee}</p>
+                            <p className="text-xs text-espresso-500">Typically {p.time}</p>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-espresso-300 transition group-hover:text-espresso-700" />
+                        </a>
+                      ))}
                     </div>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-espresso-700 group-hover:text-espresso-900">
-                      Order delivery →
-                    </span>
-                  </a>
+                  </div>
                 )}
 
-                {/* Pickup tile */}
-                {(ordering!.takeout || ordering!.curbsidePickup || ordering!.ordersUri) && (
-                  <a
-                    href={googleMapsOrderUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex flex-col justify-between rounded-2xl border border-espresso-100 bg-espresso-50 p-4 transition hover:border-espresso-300 hover:bg-crema sm:rounded-3xl"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <ShoppingBag className="h-4 w-4 text-espresso-600" />
-                          <span className="text-sm font-semibold text-espresso-900">Pickup</span>
-                        </div>
-                        <ExternalLink className="h-3.5 w-3.5 text-espresso-400 transition group-hover:text-espresso-700" />
-                      </div>
-                      <p className="mt-1.5 text-xs text-espresso-500">
-                        Order ahead, skip the line
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                {/* ── Pickup options ─────────────────────────────────────── */}
+                {(ordering!.takeout || ordering!.curbsidePickup || ordering!.dineIn) && (
+                  <div className="mt-4">
+                    <p className="mb-2.5 text-[10px] font-semibold uppercase tracking-widest text-espresso-400">Pickup</p>
+                    <div className="rounded-2xl border border-espresso-100 bg-espresso-50 p-4">
+                      <div className="flex flex-wrap gap-2">
                         {ordering!.takeout && (
-                          <span className="rounded-full border border-espresso-200 bg-white px-2 py-0.5 text-[10px] font-medium text-espresso-600">
+                          <span className="flex items-center gap-1.5 rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-medium text-espresso-700">
+                            <ShoppingBag className="h-3 w-3" />
                             In-store pickup
                           </span>
                         )}
                         {ordering!.curbsidePickup && (
-                          <span className="rounded-full border border-espresso-200 bg-white px-2 py-0.5 text-[10px] font-medium text-espresso-600">
+                          <span className="flex items-center gap-1.5 rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-medium text-espresso-700">
+                            <Car className="h-3 w-3" />
                             Curbside
                           </span>
                         )}
                         {ordering!.dineIn && (
-                          <span className="rounded-full border border-espresso-200 bg-white px-2 py-0.5 text-[10px] font-medium text-espresso-600">
+                          <span className="flex items-center gap-1.5 rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-medium text-espresso-700">
+                            <UtensilsCrossed className="h-3 w-3" />
                             Dine-in
                           </span>
                         )}
                       </div>
+                      {/* Order-ahead link (direct platform or ordersUri) */}
+                      {(ordering!.ordersUri ?? (ordering!.detectedPlatform && shop.website)) && (
+                        <a
+                          href={ordering!.ordersUri ?? shop.website!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-espresso-800 hover:underline"
+                        >
+                          Order ahead for pickup{ordering!.detectedPlatform ? ` via ${ordering!.detectedPlatform}` : ""}
+                          <ArrowRight className="h-3 w-3" />
+                        </a>
+                      )}
                     </div>
-                    <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-espresso-700 group-hover:text-espresso-900">
-                      Order pickup →
-                    </span>
+                  </div>
+                )}
+
+                {/* Fallback: ordersUri only (no delivery/pickup flags) */}
+                {!ordering!.delivery && !ordering!.takeout && !ordering!.curbsidePickup && ordering!.ordersUri && (
+                  <a
+                    href={ordering!.ordersUri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-espresso-200 bg-espresso-50 px-5 py-3.5 text-sm font-semibold text-espresso-800 transition hover:bg-crema"
+                  >
+                    Order online
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                   </a>
                 )}
+
+                <p className="mt-4 text-[10px] text-espresso-300">
+                  Fees are typical estimates — actual fees and times vary by location and provider.
+                </p>
               </div>
-
-              {/* Direct platform link if detected (Toast, Square, etc.) */}
-              {ordering!.detectedPlatform && shop.website && (
-                <a
-                  href={shop.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-espresso-200 bg-white px-5 py-2.5 text-sm font-semibold text-espresso-800 transition hover:bg-crema"
-                >
-                  Order directly on {ordering!.detectedPlatform}
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                </a>
-              )}
-
-              <p className="mt-3 text-[10px] text-espresso-400">
-                Availability data from Google Places · Provider selection on the order page
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Caffi3ne Brief */}
           <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">

@@ -53,7 +53,8 @@ export default function LandingPage() {
         </div>
 
         {/* Dither steam — WebGL Perlin noise, cream bg + brown pixels */}
-        <div className="absolute inset-0 -z-10">
+        {/* bg-crema is the cream fallback shown instantly before WebGL canvas loads */}
+        <div className="absolute inset-0 -z-10 bg-crema">
           <DitherBg />
         </div>
 

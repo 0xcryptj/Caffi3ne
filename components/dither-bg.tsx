@@ -267,7 +267,8 @@ export default function DitherBg({
 }: DitherBgProps) {
   return (
     <Canvas
-      className={`!w-full !h-full ${className}`}
+      style={{ display: "block", width: "100%", height: "100%" }}
+      className={className}
       camera={{ position: [0, 0, 6] }}
       dpr={1}
       gl={{ antialias: false, preserveDrawingBuffer: false }}
