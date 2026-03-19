@@ -3,6 +3,7 @@ import { clamp } from "@/lib/utils";
 import { getMockInsightForShop } from "@/lib/data/mock-shops";
 import { getTrafficSignal } from "@/lib/services/traffic";
 import { getWeatherSignal } from "@/lib/services/weather";
+import { getBestTimeCurrentPerc, getPopularTimes } from "@/lib/services/besttime";
 import type { CrowdInsight, ExternalSignals, Shop } from "@/lib/types";
 
 // Deterministic per-shop variance so shops at the same location don't all show identical scores
@@ -81,21 +82,30 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
     return getMockInsightForShop(shop.id);
   }
 
-  const [weather, traffic] = await Promise.all([
+  const [weather, traffic, popularTimes] = await Promise.all([
     getWeatherSignal(shop.lat, shop.lng),
-    getTrafficSignal(shop.lat, shop.lng)
+    getTrafficSignal(shop.lat, shop.lng),
+    getPopularTimes(shop.name, shop.address),
   ]);
+
+  // If BestTime.app data is available, use the actual historical percentile for the
+  // current day/hour instead of the static bracket table — far more accurate.
+  const btPerc = popularTimes
+    ? getBestTimeCurrentPerc(popularTimes, shop.utcOffsetMinutes)
+    : null;
 
   const breakdown: ExternalSignals = {
     weatherScore: weather.score,
     trafficScore: traffic.score,
-    timeScore: getTimeScore(shop.utcOffsetMinutes),
-    dayScore: getDayScore(shop.utcOffsetMinutes),
-    eventScore: 12,
+    timeScore:    btPerc !== null ? btPerc : getTimeScore(shop.utcOffsetMinutes),
+    dayScore:     getDayScore(shop.utcOffsetMinutes),
+    eventScore:   12,
     merchantOverrideScore: 0,
     rawInputs: {
-      weather: weather.raw,
-      traffic: traffic.raw
+      weather:          weather.raw,
+      traffic:          traffic.raw,
+      bestTimeUsed:     btPerc !== null,
+      bestTimePerc:     btPerc ?? null,
     }
   };
 
@@ -109,10 +119,13 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
     waitMinutes: estimateWait(finalScore, breakdown.timeScore),
     breakdown,
     explanation: [
-      "Live score blends weather, traffic, and temporal demand signals.",
-      "Merchant override support is reserved for future claimed-shop workflows.",
-      "POS integrations can be added later without changing page contracts."
+      btPerc !== null
+        ? `Popular times (BestTime.app): ${Math.round(btPerc)}th-percentile busy for this hour/day historically.`
+        : "Live score blends weather, traffic, and time-of-day demand signals.",
+      "Real-time traffic signal via TomTom Flow API.",
+      "Weather demand factor via Tomorrow.io Realtime API.",
     ],
+    popularTimes: popularTimes ?? undefined,
     updatedAt: new Date().toISOString()
   };
 }

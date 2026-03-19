@@ -28,6 +28,38 @@ export interface Shop {
   photos?: string[]; // resource names: "places/{id}/photos/{ref}"
   editorialSummary?: string;
   source?: "mock" | "google";
+  /** Order/service options from Google Places */
+  ordering?: OrderingInfo;
+}
+
+export interface OrderingInfo {
+  delivery: boolean;
+  takeout: boolean;
+  dineIn: boolean;
+  curbsidePickup: boolean;
+  reservable?: boolean;
+  /** Google Maps ordering page URI — opens DoorDash / Uber Eats / Toast options */
+  ordersUri?: string;
+  /** Ordering platform detected from the shop's website URL */
+  detectedPlatform?: string;
+}
+
+export interface PopularTimesHour {
+  hour: number;       // 0–23
+  perc: number;       // 0–100 busyness percentile
+  intensity: string;  // e.g. "Below average" | "Average" | "High" | "Very high"
+  closed: boolean;
+}
+
+export interface PopularTimesDay {
+  dayInt: number;   // 0=Mon … 6=Sun (BestTime.app convention)
+  dayText: string;
+  hours: PopularTimesHour[];
+}
+
+export interface PopularTimes {
+  days: PopularTimesDay[];  // 7 days Mon–Sun
+  fetchedAt: string;
 }
 
 export interface ExternalSignals {
@@ -53,6 +85,8 @@ export interface CrowdInsight {
   breakdown: ExternalSignals;
   explanation: string[];
   updatedAt: string;
+  /** Real foot traffic data from BestTime.app — powers the Popular Times chart */
+  popularTimes?: PopularTimes;
 }
 
 export interface ShopWithInsight extends Shop {

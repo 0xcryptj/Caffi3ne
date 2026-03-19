@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Clock, Clock3, DollarSign, ExternalLink, Globe, MapPin, Navigation, Phone, Sparkles, Wind } from "lucide-react";
+import { ArrowRight, Car, Clock, Clock3, DollarSign, ExternalLink, Globe, MapPin, Navigation, Package, Phone, ShoppingBag, Sparkles, TrendingUp, UtensilsCrossed, Wind } from "lucide-react";
 import { PhotoGrid } from "@/components/photo-grid";
 import { ShopLogo } from "@/components/shop-logo";
+import { PopularTimesChart } from "@/components/popular-times-chart";
 import { getCoffeeShopById } from "@/lib/services/places";
-import { getCrowdInsightForShop } from "@/lib/services/insights";
+import { getCrowdInsightForShop, getLocalHour } from "@/lib/services/insights";
+import { getBestTimeCurrentDay } from "@/lib/services/besttime";
 import { formatScore } from "@/lib/utils";
 import type { BusynessLabel, PriceLevel, Shop } from "@/lib/types";
 
@@ -75,6 +77,19 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
   const price = priceLabel(shop.priceLevel);
   const photos = shop.photos ?? [];
   const chain = isChain(shop.website);
+
+  // For the Popular Times chart: compute the current local hour + BestTime day
+  const currentLocalHour = getLocalHour(shop.utcOffsetMinutes);
+  const currentBtDay     = getBestTimeCurrentDay(shop.utcOffsetMinutes);
+
+  // Ordering helpers
+  const ordering = shop.ordering;
+  const hasAnyOrdering = ordering && (
+    ordering.delivery || ordering.takeout || ordering.dineIn || ordering.curbsidePickup || ordering.ordersUri
+  );
+  const googleMapsOrderUrl =
+    ordering?.ordersUri ??
+    `https://www.google.com/maps/place/?q=place_id:${shop.googlePlaceId}`;
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
@@ -220,6 +235,77 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             </div>
           </div>
 
+          {/* ── Order & Pickup ─────────────────────────────────────────────── */}
+          {hasAnyOrdering && (
+            <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-espresso-400 sm:h-5 sm:w-5" />
+                <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">Order &amp; Pickup</h2>
+              </div>
+              <p className="mt-1 text-xs text-espresso-400">Service options available at this location</p>
+
+              {/* Service option badges */}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {ordering!.delivery && (
+                  <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+                    <Package className="h-3.5 w-3.5 shrink-0" />
+                    Delivery
+                  </div>
+                )}
+                {ordering!.takeout && (
+                  <div className="flex items-center gap-2 rounded-xl bg-espresso-50 px-3 py-2 text-xs font-medium text-espresso-700">
+                    <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+                    Takeout
+                  </div>
+                )}
+                {ordering!.dineIn && (
+                  <div className="flex items-center gap-2 rounded-xl bg-espresso-50 px-3 py-2 text-xs font-medium text-espresso-700">
+                    <UtensilsCrossed className="h-3.5 w-3.5 shrink-0" />
+                    Dine-in
+                  </div>
+                )}
+                {ordering!.curbsidePickup && (
+                  <div className="flex items-center gap-2 rounded-xl bg-espresso-50 px-3 py-2 text-xs font-medium text-espresso-700">
+                    <Car className="h-3.5 w-3.5 shrink-0" />
+                    Curbside
+                  </div>
+                )}
+              </div>
+
+              {/* Order buttons */}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                {/* Primary: Google order page (shows DoorDash, Uber Eats, etc.) */}
+                <a
+                  href={googleMapsOrderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-espresso-900 px-5 py-3 text-sm font-semibold text-crema transition hover:bg-espresso-800 sm:w-auto"
+                >
+                  <Image src="/googlemaps.png" alt="" width={18} height={18} className="rounded-sm" />
+                  Order via Google Maps
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                </a>
+
+                {/* Secondary: direct platform link if detected */}
+                {ordering!.detectedPlatform && shop.website && (
+                  <a
+                    href={shop.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-espresso-200 bg-white px-5 py-3 text-sm font-semibold text-espresso-800 transition hover:bg-crema sm:w-auto"
+                  >
+                    Order on {ordering!.detectedPlatform}
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                  </a>
+                )}
+              </div>
+
+              <p className="mt-3 text-[10px] text-espresso-400">
+                Ordering options sourced from Google Places · Additional providers shown on the Google Maps order page
+              </p>
+            </div>
+          )}
+
           {/* Caffi3ne Brief */}
           <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
             <div className="flex items-center gap-2">
@@ -228,6 +314,26 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             </div>
             <p className="mt-3 text-sm leading-7 text-espresso-600 sm:mt-4 sm:text-base sm:leading-8">{brief}</p>
           </div>
+
+          {/* ── Popular Times ─────────────────────────────────────────────── */}
+          {insight.popularTimes && (
+            <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-espresso-400 sm:h-5 sm:w-5" />
+                <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">Popular times</h2>
+              </div>
+              <p className="mt-1 text-xs text-espresso-400">
+                Typical visit patterns from real historical foot traffic data
+              </p>
+              <div className="mt-5">
+                <PopularTimesChart
+                  popularTimes={insight.popularTimes}
+                  currentHour={currentLocalHour}
+                  currentBtDay={currentBtDay}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Visit Website / Store Locator */}
           {shop.website && (
@@ -291,6 +397,9 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             <h2 className="font-display text-xl text-espresso-900 sm:text-2xl">How the crowd estimate works</h2>
             <p className="mt-3 text-sm text-espresso-600 sm:mt-4 sm:text-base">
               Score blends weather, traffic, time-of-day, and day-of-week signals into a 0–100 busyness estimate.
+              {(insight.breakdown.rawInputs.bestTimeUsed as boolean | undefined) && (
+                <> Time signal is sourced from <span className="font-semibold text-espresso-800">real historical foot traffic data</span> (BestTime.app) for this specific hour and day.</>
+              )}
               {insight.waitMinutes && (
                 <> The <span className="font-semibold text-espresso-800">{insight.waitMinutes.label}</span> wait estimate is derived from that score plus the current time-of-day — rush hours extend the range.</>
               )}
@@ -299,7 +408,10 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
               {[
                 { label: "Traffic factor",  value: insight.breakdown.trafficScore },
                 { label: "Weather factor",  value: insight.breakdown.weatherScore },
-                { label: "Time factor",     value: insight.breakdown.timeScore },
+                {
+                  label: insight.breakdown.rawInputs.bestTimeUsed ? "Popular times" : "Time factor",
+                  value: insight.breakdown.timeScore
+                },
                 { label: "Day factor",      value: insight.breakdown.dayScore }
               ].map(({ label, value }) => (
                 <div key={label} className="rounded-2xl bg-crema p-4 sm:rounded-3xl sm:p-5">

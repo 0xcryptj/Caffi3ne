@@ -1,6 +1,6 @@
 import { getMockShopById, getMockShops } from "@/lib/data/mock-shops";
 import { externalServicesConfig, hasGoogleApiKey } from "@/lib/services/config";
-import type { NearbySearchParams, PriceLevel, Shop } from "@/lib/types";
+import type { NearbySearchParams, OrderingInfo, PriceLevel, Shop } from "@/lib/types";
 
 const PLACES_NEW_BASE = "https://places.googleapis.com/v1/places";
 
@@ -28,6 +28,31 @@ interface PlacesNewPlace {
   priceLevel?: string;
   photos?: { name?: string }[];
   editorialSummary?: { text?: string };
+  // ── Service options (detail fetch only) ────────────────────────────
+  delivery?: boolean;
+  dineIn?: boolean;
+  takeout?: boolean;
+  curbsidePickup?: boolean;
+  reservable?: boolean;
+  googleMapsLinks?: {
+    directionsUri?: string;
+    placeUri?: string;
+    /** Opens Google's "Order Online" page — shows DoorDash, Uber Eats, Toast, etc. */
+    ordersUri?: string;
+  };
+}
+
+/** Detect ordering platform from the shop's website URL. */
+function detectPlatform(website?: string): string | undefined {
+  if (!website) return undefined;
+  const url = website.toLowerCase();
+  if (url.includes("toasttab.com") || url.includes("toast.site")) return "Toast";
+  if (url.includes("squareup.com") || url.includes("square.site")) return "Square";
+  if (url.includes("slicelife.com") || url.includes("slice.life")) return "Slice";
+  if (url.includes("olo.com")) return "Olo";
+  // Generic ordering path patterns
+  if (/\/(order|ordering)(\/|$)/.test(url)) return "Online Order";
+  return undefined;
 }
 
 function milesFromCoordinates(originLat: number, originLng: number, lat: number, lng: number) {
@@ -77,7 +102,19 @@ function normalizePlacesNewResult(place: PlacesNewPlace, origin?: NearbySearchPa
     priceLevel: normalizePriceLevel(place.priceLevel),
     photos: (place.photos ?? []).map((p) => p.name).filter((n): n is string => Boolean(n)).slice(0, 5),
     editorialSummary: place.editorialSummary?.text,
-    source: "google"
+    source: "google",
+    // Ordering info — only present when fetched via getCoffeeShopById (detail page)
+    ordering: (place.delivery !== undefined || place.takeout !== undefined || place.dineIn !== undefined || place.googleMapsLinks?.ordersUri)
+      ? ({
+          delivery:       place.delivery       ?? false,
+          takeout:        place.takeout        ?? false,
+          dineIn:         place.dineIn         ?? false,
+          curbsidePickup: place.curbsidePickup ?? false,
+          reservable:     place.reservable,
+          ordersUri:      place.googleMapsLinks?.ordersUri,
+          detectedPlatform: detectPlatform(place.websiteUri),
+        } satisfies OrderingInfo)
+      : undefined,
   };
 }
 
@@ -238,7 +275,14 @@ class GooglePlacesProvider implements PlacesProvider {
       "types",
       "priceLevel",
       "photos",
-      "editorialSummary"
+      "editorialSummary",
+      // ── Ordering / service options ──────────────────────────────────
+      "delivery",
+      "dineIn",
+      "takeout",
+      "curbsidePickup",
+      "reservable",
+      "googleMapsLinks",
     ].join(",");
 
     const response = await fetch(`${PLACES_NEW_BASE}/${id}`, {
