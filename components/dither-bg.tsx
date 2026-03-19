@@ -170,9 +170,16 @@ function DitheredWaves({
   const { viewport, size, gl } = useThree();
   const mousePosVec = useRef(new THREE.Vector2(-1, -1));
 
+  // Initialize resolution with the actual canvas size so the very first rendered
+  // frame has a valid resolution (not (0,0) which causes NaN in the shader).
   const uniforms = useRef({
     time:          new THREE.Uniform(0),
-    resolution:    new THREE.Uniform(new THREE.Vector2()),
+    resolution:    new THREE.Uniform(
+      new THREE.Vector2(
+        Math.floor(size.width  * gl.getPixelRatio()),
+        Math.floor(size.height * gl.getPixelRatio()),
+      )
+    ),
     waveSpeed:     new THREE.Uniform(waveSpeed),
     waveFrequency: new THREE.Uniform(waveFrequency),
     waveAmplitude: new THREE.Uniform(waveAmplitude),

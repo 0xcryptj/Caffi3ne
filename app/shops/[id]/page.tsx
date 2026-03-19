@@ -195,10 +195,10 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
                         style={{ width: `${insight.breakdown.timeScore}%` }}
                       />
                     </div>
-                    <p className="mt-1 text-xs text-espresso-500 sm:text-sm">
+                    <p className="mt-1 truncate text-xs text-espresso-500">
                       {(insight.breakdown.rawInputs.bestTimeUsed as boolean | undefined)
-                        ? "Historical · BestTime"
-                        : "Typical for this hour"}
+                        ? "BestTime.app"
+                        : "Estimated"}
                     </p>
                   </>
                 ) : (

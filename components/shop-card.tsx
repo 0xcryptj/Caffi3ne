@@ -107,8 +107,8 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
                 style={{ width: `${score}%` }}
               />
             </div>
-            <span className="w-[54px] shrink-0 text-right text-[10px] font-medium text-espresso-500">
-              {trafficLabel(score)} · {score}
+            <span className="shrink-0 whitespace-nowrap text-right text-[10px] font-medium text-espresso-500">
+              {trafficLabel(score)}
             </span>
           </div>
         )}
