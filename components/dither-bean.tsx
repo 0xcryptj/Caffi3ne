@@ -89,9 +89,11 @@ interface DitherBeanProps {
   displaySize?: number;
   rotate?: number;
   className?: string;
+  /** Delay (seconds) before the idle float begins — staggers beans so they're out of phase */
+  idleDelay?: number;
 }
 
-export function DitherBean({ displaySize = 340, rotate = 0, className = "" }: DitherBeanProps) {
+export function DitherBean({ displaySize = 340, rotate = 0, className = "", idleDelay = 0 }: DitherBeanProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -102,24 +104,38 @@ export function DitherBean({ displaySize = 340, rotate = 0, className = "" }: Di
   return (
     <motion.div
       className={`select-none ${className}`}
-      style={{ cursor: "pointer", originX: "50%", originY: "50%", aspectRatio: "1" }}
-      // When hovered: looping float + rock. When not hovered: snap back.
+      style={{
+        cursor: "pointer",
+        originX: "50%",
+        originY: "50%",
+        aspectRatio: "1",
+        filter: "drop-shadow(0 8px 18px rgba(70, 32, 6, 0.38))",
+      }}
       animate={
         hovered
           ? {
-              y: [0, -18, -5, -20, 0],
-              rotate: [rotate, rotate - 6, rotate + 4, rotate - 3, rotate],
-              scale: 1.06,
+              y: [0, -16, -3, -18, 0],
+              rotate: [rotate, rotate - 8, rotate + 5, rotate - 3, rotate],
+              scale: 1.09,
             }
-          : { y: 0, rotate, scale: 1 }
+          : {
+              y: [0, -7, -1, -8, 0],
+              rotate: [rotate, rotate + 2, rotate - 1.5, rotate + 1, rotate],
+              scale: 1,
+            }
       }
       transition={
         hovered
           ? {
-              default: { duration: 4.5, repeat: Infinity, ease: "easeInOut" },
-              scale:   { duration: 0.35, repeat: 0 },
+              y:      { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
+              rotate: { duration: 3.2, repeat: Infinity, ease: "easeInOut" },
+              scale:  { duration: 0.28, ease: [0.34, 1.56, 0.64, 1] },
             }
-          : { duration: 0.55, ease: "easeOut" }
+          : {
+              y:      { duration: 4.8, repeat: Infinity, ease: "easeInOut", delay: idleDelay },
+              rotate: { duration: 6.0, repeat: Infinity, ease: "easeInOut", delay: idleDelay + 0.4 },
+              scale:  { duration: 0.45, ease: "easeOut" },
+            }
       }
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}

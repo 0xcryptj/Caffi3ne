@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Database, MapPinned, Store, Waves } from "lucide-react";
 import { SectionHeading } from "@/components/section-heading";
-import { DitherBean } from "@/components/dither-bean";
+import { BeanCluster } from "@/components/bean-cluster";
 import { DitherBg } from "@/components/dither-bg-client";
 import { RotatingText } from "@/components/rotating-text";
 import { BlurText } from "@/components/blur-text";
@@ -59,20 +59,9 @@ export default function LandingPage() {
 
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[0.85fr_1.15fr] lg:px-8 lg:py-28">
 
-          {/* Left: two dithered coffee beans — hidden on mobile to keep hero compact */}
-          <div className="relative hidden items-center justify-center sm:flex lg:min-h-[480px]">
-            <DitherBean
-              displaySize={340}
-              rotate={-10}
-              className="relative z-10 w-[clamp(120px,26vw,220px)] sm:w-[clamp(140px,24vw,240px)] lg:w-[clamp(160px,15vw,260px)]"
-            />
-            <div className="absolute -bottom-2 right-0 z-20 sm:-bottom-4 sm:right-4 lg:-bottom-6 lg:right-0">
-              <DitherBean
-                displaySize={200}
-                rotate={28}
-                className="w-[clamp(65px,15vw,120px)] sm:w-[clamp(75px,12vw,135px)] lg:w-[clamp(85px,8vw,150px)]"
-              />
-            </div>
+          {/* Left: bean cluster — hidden on mobile */}
+          <div className="hidden items-center justify-center sm:flex">
+            <BeanCluster />
           </div>
 
           {/* Right: text */}
