@@ -105,20 +105,22 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     coordsRef.current = null;
     setStatus("Requesting your location…");
 
-    // IP location: resolves instantly, used as fallback
+    // IP location: resolves instantly, used as a coordinate fallback only.
+    // We intentionally do NOT display the IP city name — IP geolocation is tied to
+    // carrier NAT gateways and can show a city many miles from the user's real location.
     fetch("/api/location")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((loc: IpLocation) => {
-        const label = loc.city
-          ? `Near ${loc.city}${loc.country ? `, ${loc.country}` : ""}`
-          : "Approximate location";
-        applyLocation(loc.lat, loc.lng, label, false);
+        // Always show "Approximate location" — never the IP city string
+        applyLocation(loc.lat, loc.lng, "Approximate location · allow GPS for accuracy", false);
       })
       .catch(() => {
         if (!locationReadyRef.current) setStatus("Location unavailable — try ZIP search");
       });
 
-    // GPS: precise location — overwrites IP result once user grants permission
+    // GPS: precise location — overwrites IP result once user grants permission.
+    // maximumAge: 0 forces a fresh reading (never serve a stale cached position).
+    // timeout: 15000 gives slower mobile GPS chips extra time to acquire a fix.
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -126,8 +128,11 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         },
         () => {
           // Denied or timed out — IP fallback stays, no further action needed
+          if (!gpsResolvedRef.current && locationReadyRef.current) {
+            setStatus("Approximate location · allow GPS for accuracy");
+          }
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     }
   }, [applyLocation, locationMode]);
