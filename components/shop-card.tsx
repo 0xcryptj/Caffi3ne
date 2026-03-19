@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock } from "lucide-react";
+import { Activity, Clock } from "lucide-react";
 import type { BusynessLabel, ShopWithInsight } from "@/lib/types";
 import { formatDistance, formatScore } from "@/lib/utils";
 import { ShopLogo } from "@/components/shop-logo";
@@ -17,9 +17,26 @@ interface ShopCardProps {
   index?: number;
 }
 
+/** Convert a 0–100 crowd score to a compact foot-traffic label */
+function trafficLabel(score: number): string {
+  if (score < 30) return "Low";
+  if (score < 55) return "Moderate";
+  if (score < 78) return "High";
+  return "Very high";
+}
+
+/** Bar fill colour per traffic level */
+function trafficColor(score: number): string {
+  if (score < 30) return "bg-slate-300";
+  if (score < 55) return "bg-emerald-400";
+  if (score < 78) return "bg-amber-400";
+  return "bg-red-400";
+}
+
 export function ShopCard({ shop, index = 0 }: ShopCardProps) {
   const { pill } = crowdStyles[shop.insight.label];
   const hours = shop.hours[0]?.replace(/^[A-Za-z]+:\s*/, "") ?? "";
+  const score = shop.insight.score;
 
   return (
     <Link
@@ -79,6 +96,22 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
             <span className="ml-auto hidden truncate text-xs text-espresso-400 sm:inline">{hours}</span>
           )}
         </div>
+
+        {/* ── Foot traffic bar ─────────────────────────────────────────── */}
+        {shop.isOpenNow !== false && (
+          <div className="mt-2.5 flex items-center gap-2">
+            <Activity className="h-3 w-3 shrink-0 text-espresso-400" />
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-espresso-100">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${trafficColor(score)}`}
+                style={{ width: `${score}%` }}
+              />
+            </div>
+            <span className="w-[54px] shrink-0 text-right text-[10px] font-medium text-espresso-500">
+              {trafficLabel(score)} · {score}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );

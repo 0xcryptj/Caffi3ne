@@ -72,7 +72,16 @@ const CLOSED_INSIGHT: CrowdInsight = {
   updatedAt: new Date().toISOString()
 };
 
-export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> {
+/**
+ * @param shop        The shop to score.
+ * @param options.withPopularTimes  Set true on the detail page to fetch BestTime
+ *   foot-traffic data and include it in the insight (costs 1 BestTime credit per
+ *   unique venue/day). Leave false (default) on list/nearby views to preserve credits.
+ */
+export async function getCrowdInsightForShop(
+  shop: Shop,
+  options?: { withPopularTimes?: boolean }
+): Promise<CrowdInsight> {
   // Closed shops always score 0 — never rank as live recommendations
   if (shop.isOpenNow === false) {
     return { ...CLOSED_INSIGHT, updatedAt: new Date().toISOString() };
@@ -82,13 +91,15 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
     return getMockInsightForShop(shop.id);
   }
 
+  // BestTime is only fetched for detail pages (options.withPopularTimes === true)
+  // to avoid burning free-tier credits on every nearby-list request.
   const [weather, traffic, popularTimes] = await Promise.all([
     getWeatherSignal(shop.lat, shop.lng),
     getTrafficSignal(shop.lat, shop.lng),
-    getPopularTimes(shop.name, shop.address),
+    options?.withPopularTimes ? getPopularTimes(shop.name, shop.address) : Promise.resolve(null),
   ]);
 
-  // If BestTime.app data is available, use the actual historical percentile for the
+  // If BestTime data is available, use the actual historical percentile for the
   // current day/hour instead of the static bracket table — far more accurate.
   const btPerc = popularTimes
     ? getBestTimeCurrentPerc(popularTimes, shop.utcOffsetMinutes)
@@ -102,10 +113,10 @@ export async function getCrowdInsightForShop(shop: Shop): Promise<CrowdInsight> 
     eventScore:   12,
     merchantOverrideScore: 0,
     rawInputs: {
-      weather:          weather.raw,
-      traffic:          traffic.raw,
-      bestTimeUsed:     btPerc !== null,
-      bestTimePerc:     btPerc ?? null,
+      weather:      weather.raw,
+      traffic:      traffic.raw,
+      bestTimeUsed: btPerc !== null,
+      bestTimePerc: btPerc ?? null,
     }
   };
 

@@ -71,7 +71,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
   const shop = await getCoffeeShopById(id);
   if (!shop) notFound();
 
-  const insight = await getCrowdInsightForShop(shop);
+  const insight = await getCrowdInsightForShop(shop, { withPopularTimes: true });
   const brief = generateBrief(shop);
   const vibe = vibeLabel(shop);
   const price = priceLabel(shop.priceLevel);
@@ -144,8 +144,8 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
               ))}
             </div>
 
-            {/* Score + wait + rating */}
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+            {/* Score + wait + foot traffic + rating */}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
               <div className="rounded-2xl bg-crema p-4 sm:rounded-3xl sm:p-5">
                 <div className="flex items-center gap-1.5 text-xs text-espresso-500 sm:text-sm">
                   <Sparkles className="h-3.5 w-3.5 shrink-0" />
@@ -173,6 +173,38 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
                   <>
                     <p className="mt-2 text-3xl font-semibold text-espresso-400 sm:text-4xl">—</p>
                     <p className="mt-1 text-xs text-espresso-400 sm:text-sm">Shop is closed</p>
+                  </>
+                )}
+              </div>
+
+              {/* Foot traffic — shows BestTime percentile when available, crowd score otherwise */}
+              <div className="rounded-2xl bg-crema p-4 sm:rounded-3xl sm:p-5">
+                <div className="flex items-center gap-1.5 text-xs text-espresso-500 sm:text-sm">
+                  <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                  Foot traffic
+                </div>
+                {shop.isOpenNow !== false ? (
+                  <>
+                    <p className="mt-2 text-3xl font-semibold text-espresso-900 sm:text-4xl">
+                      {insight.breakdown.timeScore}
+                      <span className="text-lg text-espresso-400">%</span>
+                    </p>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-espresso-200">
+                      <div
+                        className="h-full rounded-full bg-espresso-700 transition-all"
+                        style={{ width: `${insight.breakdown.timeScore}%` }}
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-espresso-500 sm:text-sm">
+                      {(insight.breakdown.rawInputs.bestTimeUsed as boolean | undefined)
+                        ? "Historical · BestTime"
+                        : "Typical for this hour"}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-2 text-3xl font-semibold text-espresso-400 sm:text-4xl">—</p>
+                    <p className="mt-1 text-xs text-espresso-400 sm:text-sm">Closed</p>
                   </>
                 )}
               </div>
