@@ -21,6 +21,34 @@ describe("buildAuthCallbackUrl", () => {
   });
 });
 
+describe("getAuthRedirectOrigin (browser)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("prefers NEXT_PUBLIC_APP_URL when the tab is on a public host", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://caffi3ne.cc");
+    vi.stubGlobal("window", { location: { origin: "https://www.caffi3ne.cc" } });
+    const { getAuthRedirectOrigin } = await import("@/lib/get-auth-callback-url");
+    expect(getAuthRedirectOrigin()).toBe("https://caffi3ne.cc");
+  });
+
+  it("uses the tab origin on localhost even if env is production", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://caffi3ne.cc");
+    vi.stubGlobal("window", { location: { origin: "http://localhost:3000" } });
+    const { getAuthRedirectOrigin } = await import("@/lib/get-auth-callback-url");
+    expect(getAuthRedirectOrigin()).toBe("http://localhost:3000");
+  });
+
+  it("uses the tab origin when env mistakenly stays localhost but the site is public", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    vi.stubGlobal("window", { location: { origin: "https://caffi3ne.cc" } });
+    const { getAuthRedirectOrigin } = await import("@/lib/get-auth-callback-url");
+    expect(getAuthRedirectOrigin()).toBe("https://caffi3ne.cc");
+  });
+});
+
 /**
  * Manual QA (requires Supabase + Google OAuth + email provider):
  * - Google: Authentication → Google enabled; Google Cloud OAuth redirect = Supabase callback URL only.

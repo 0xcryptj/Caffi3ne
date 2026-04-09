@@ -1,15 +1,48 @@
 import { appConfig } from "@/lib/config";
 
+function trimOrigin(url: string | undefined | null): string | null {
+  const t = url?.trim().replace(/\/$/, "");
+  return t && t.length > 0 ? t : null;
+}
+
+function looksLikeLocalOrigin(origin: string): boolean {
+  try {
+    const host = new URL(origin).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+  } catch {
+    return origin.includes("localhost") || origin.includes("127.0.0.1");
+  }
+}
+
 /**
- * Canonical site origin for auth redirects. In the browser we always use the
- * current origin so local dev and Cloudflare previews work. For any server-only
- * usage, set NEXT_PUBLIC_APP_URL to your deployed URL (e.g. https://caffi3ne.pages.dev).
+ * Canonical origin for OAuth, magic links, and signup confirmation emails.
+ *
+ * - **Production:** Prefer `NEXT_PUBLIC_APP_URL` so confirmation links always use your real domain
+ *   (e.g. https://caffi3ne.cc), not localhost — set this on Vercel to your public URL.
+ * - **Local dev:** Uses the current tab origin so `.env.local` can still point at localhost.
+ * - **Misconfigured env:** If env is localhost but the user is on a public host, the tab wins so
+ *   emails are not forced to localhost.
  */
 export function getAuthRedirectOrigin(): string {
+  const envCanonical = trimOrigin(process.env.NEXT_PUBLIC_APP_URL);
+  const envIsLocal = envCanonical ? looksLikeLocalOrigin(envCanonical) : false;
+
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    const win = window.location.origin;
+    const winIsLocal = looksLikeLocalOrigin(win);
+
+    if (winIsLocal || envIsLocal) {
+      return win;
+    }
+
+    if (envCanonical) {
+      return envCanonical;
+    }
+
+    return win;
   }
-  return appConfig.appUrl.replace(/\/$/, "");
+
+  return envCanonical ?? appConfig.appUrl.replace(/\/$/, "");
 }
 
 export type AuthCallbackOptions = {
