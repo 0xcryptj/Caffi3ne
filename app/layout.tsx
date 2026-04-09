@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { Session } from "@supabase/supabase-js";
+import Script from "next/script";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
@@ -7,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Providers } from "@/app/providers";
+import { googleAdSenseLoaderSrcExact } from "@/lib/adsense-config";
 import { appConfig } from "@/lib/config";
 import type { Profile } from "@/lib/types";
 import { createClient } from "@/utils/supabase/server";
@@ -16,7 +18,10 @@ export const metadata: Metadata = {
     default: `${appConfig.name} | Coffee Intelligence`,
     template: `%s | ${appConfig.name}`
   },
-  description: appConfig.description
+  description: appConfig.description,
+  other: {
+    "google-adsense-account": "ca-pub-7335312097731274"
+  }
 };
 
 export const viewport: Viewport = {
@@ -49,6 +54,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </Providers>
         <Analytics />
         <SpeedInsights />
+        <Script
+          async
+          src={googleAdSenseLoaderSrcExact}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

@@ -1,0 +1,5 @@
+# Local secrets — keep out of AI indexing and bulk search
+.env
+.env.local
+.env.*.local
+.dev.vars

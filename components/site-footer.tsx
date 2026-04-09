@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdSenseDisplay } from "@/components/adsense-display";
 
 const groups = [
   {
@@ -71,6 +72,8 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
+
+        <AdSenseDisplay />
 
         <div className="mt-12 flex flex-col gap-3 border-t border-espresso-800 pt-6 text-xs text-espresso-600 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Caffi3ne. All rights reserved.</p>
