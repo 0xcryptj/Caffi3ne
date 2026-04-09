@@ -12,13 +12,14 @@ export function getAuthRedirectOrigin(): string {
   return appConfig.appUrl.replace(/\/$/, "");
 }
 
-/** Full callback URL for OAuth and magic links (must be listed in Supabase redirect URLs). */
-export function buildAuthCallbackUrl(nextPath: string): string {
+/**
+ * OAuth / magic-link / email-confirm redirect URL only — no query string.
+ * Add this exact URL in Supabase → Authentication → URL configuration → Redirect URLs
+ * (plus `http://localhost:3000/auth/callback` for local dev).
+ *
+ * Intended destination after login is stored in the `caffi3ne_auth_next` cookie (see `auth-return-path.ts`).
+ */
+export function buildAuthCallbackUrl(): string {
   const origin = getAuthRedirectOrigin();
-  const params = new URLSearchParams();
-  if (nextPath && nextPath !== "/dashboard") {
-    params.set("next", nextPath);
-  }
-  const q = params.toString();
-  return `${origin}/auth/callback${q ? `?${q}` : ""}`;
+  return `${origin}/auth/callback`;
 }

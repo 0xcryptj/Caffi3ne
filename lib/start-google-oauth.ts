@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { setAuthReturnPathClient } from "@/lib/auth-return-path";
 import { fetchGoogleOAuthEnabled } from "@/lib/auth-provider-settings";
 import { formatAuthError } from "@/lib/format-auth-error";
 import { buildAuthCallbackUrl } from "@/lib/get-auth-callback-url";
@@ -9,7 +10,8 @@ import { buildAuthCallbackUrl } from "@/lib/get-auth-callback-url";
  */
 export async function startGoogleOAuth(
   supabase: SupabaseClient,
-  nextPath: string
+  nextPath: string,
+  nextFallback: string = "/dashboard"
 ): Promise<string | null> {
   const enabled = await fetchGoogleOAuthEnabled();
   if (!enabled) {
@@ -21,10 +23,12 @@ export async function startGoogleOAuth(
     });
   }
 
+  setAuthReturnPathClient(nextPath, nextFallback);
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: buildAuthCallbackUrl(nextPath),
+      redirectTo: buildAuthCallbackUrl(),
       scopes: "openid email profile",
       queryParams: {
         access_type: "offline",

@@ -10,23 +10,9 @@ describe("buildAuthCallbackUrl", () => {
     vi.unstubAllEnvs();
   });
 
-  it("builds /auth/callback with next when not default dashboard", async () => {
+  it("returns canonical /auth/callback on origin (no query — return path uses cookie)", async () => {
     const { buildAuthCallbackUrl } = await import("@/lib/get-auth-callback-url");
-    expect(buildAuthCallbackUrl("/nearby")).toBe(
-      "https://app.example.com/auth/callback?next=%2Fnearby"
-    );
-  });
-
-  it("omits next query for /dashboard (Supabase redirect stays canonical)", async () => {
-    const { buildAuthCallbackUrl } = await import("@/lib/get-auth-callback-url");
-    expect(buildAuthCallbackUrl("/dashboard")).toBe("https://app.example.com/auth/callback");
-  });
-
-  it("includes next for /onboarding so middleware can resume flow", async () => {
-    const { buildAuthCallbackUrl } = await import("@/lib/get-auth-callback-url");
-    expect(buildAuthCallbackUrl("/onboarding")).toBe(
-      "https://app.example.com/auth/callback?next=%2Fonboarding"
-    );
+    expect(buildAuthCallbackUrl()).toBe("https://app.example.com/auth/callback");
   });
 });
 
@@ -34,5 +20,5 @@ describe("buildAuthCallbackUrl", () => {
  * Manual QA (requires Supabase + Google OAuth + email provider):
  * - Google: Authentication → Google enabled; Google Cloud OAuth redirect = Supabase callback URL only.
  * - Redirect URLs: include https://<your-domain>/auth/callback and http://localhost:3000/auth/callback.
- * - Magic link: signInWithOtp emailRedirectTo must match one of those origins.
+ * - Magic link / email confirm: same callback URL; app stores post-login path in `caffi3ne_auth_next` cookie.
  */

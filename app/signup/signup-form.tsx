@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { setAuthReturnPathClient } from "@/lib/auth-return-path";
 import { safeInternalPath } from "@/lib/auth-routes";
 import { fetchGoogleOAuthEnabled } from "@/lib/auth-provider-settings";
 import { formatAuthError } from "@/lib/format-auth-error";
@@ -38,7 +39,11 @@ export function SignupForm({ nextPath }: Props) {
     setInfo(null);
     setGoogleLoading(true);
     try {
-      const msg = await startGoogleOAuth(supabase, safeInternalPath(nextPath, "/nearby"));
+      const msg = await startGoogleOAuth(
+        supabase,
+        safeInternalPath(nextPath, "/nearby"),
+        "/nearby"
+      );
       if (msg) setError(msg);
     } catch (e) {
       setError(e instanceof Error ? formatAuthError({ message: e.message }) : "Google sign-up failed");
@@ -62,7 +67,9 @@ export function SignupForm({ nextPath }: Props) {
     }
     setLoading(true);
     try {
-      const redirect = buildAuthCallbackUrl(safeInternalPath(nextPath, "/nearby"));
+      const continueAfter = safeInternalPath(nextPath, "/nearby");
+      setAuthReturnPathClient(continueAfter, "/nearby");
+      const redirect = buildAuthCallbackUrl();
       const { data, error: signError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
@@ -78,7 +85,6 @@ export function SignupForm({ nextPath }: Props) {
         return;
       }
       if (data.session) {
-        const continueAfter = safeInternalPath(nextPath, "/nearby");
         router.replace(
           `/onboarding?next=${encodeURIComponent(continueAfter)}` as Parameters<
             typeof router.replace
@@ -103,8 +109,8 @@ export function SignupForm({ nextPath }: Props) {
         <h1 className="font-display text-2xl text-espresso-900">Create account</h1>
         <p className="text-sm text-espresso-600">
           {googleAvailable === false
-            ? "Create an account with email and password."
-            : "Email and password, or continue with Google."}
+            ? "Sign up with your email and a password."
+            : "Continue with Google or sign up with email and a password."}
         </p>
       </div>
 
@@ -116,6 +122,40 @@ export function SignupForm({ nextPath }: Props) {
       {info && (
         <div className="rounded-lg border border-sage/40 bg-sage/10 px-3 py-2 text-sm text-espresso-800">
           {info}
+        </div>
+      )}
+
+      {googleAvailable !== false && (
+        <button
+          type="button"
+          onClick={() => void handleGoogle()}
+          disabled={busy || googleAvailable === null}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-espresso-200 bg-white px-4 py-3 text-sm font-semibold text-espresso-800 shadow-sm transition hover:border-espresso-300 hover:bg-crema disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {googleLoading || googleAvailable === null ? (
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-espresso-200 border-t-espresso-600" />
+          ) : null}
+          Continue with Google
+        </button>
+      )}
+
+      {googleAvailable === false && (
+        <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-left text-xs leading-relaxed text-espresso-800">
+          <p className="font-semibold text-espresso-900">Google sign-in is off</p>
+          <p className="mt-1 text-espresso-700">
+            Supabase → Authentication → Providers → Google → enable and save Client ID + Secret.
+          </p>
+        </div>
+      )}
+
+      {googleAvailable !== false && (
+        <div className="relative py-0.5">
+          <div className="absolute inset-0 flex items-center" aria-hidden>
+            <span className="w-full border-t border-espresso-100" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase tracking-[0.2em] text-espresso-400">
+            <span className="bg-crema/90 px-3">or</span>
+          </div>
         </div>
       )}
 
@@ -188,47 +228,10 @@ export function SignupForm({ nextPath }: Props) {
               Creating account…
             </span>
           ) : (
-            "Signup"
+            "Create account"
           )}
         </button>
       </form>
-
-      {googleAvailable !== false && (
-        <>
-          <div className="relative py-1">
-            <div className="absolute inset-0 flex items-center" aria-hidden>
-              <span className="w-full border-t border-espresso-100" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-[0.2em] text-espresso-400">
-              <span className="bg-crema/90 px-3">or</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => void handleGoogle()}
-            disabled={busy || googleAvailable === null}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-espresso-200 bg-white px-4 py-3 text-sm font-semibold text-espresso-800 shadow-sm transition hover:border-espresso-300 hover:bg-crema disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {googleLoading || googleAvailable === null ? (
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-espresso-200 border-t-espresso-600" />
-            ) : null}
-            Continue with Google
-          </button>
-        </>
-      )}
-
-      {googleAvailable === false && (
-        <div className="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-left text-xs leading-relaxed text-espresso-800">
-          <p className="font-semibold text-espresso-900">Google sign-in is off in Supabase</p>
-          <p className="mt-1 text-espresso-700">
-            Enable it under Authentication → Providers → Google, or run{" "}
-            <code className="rounded bg-white/80 px-1 py-0.5 text-[10px]">npm run enable-google-auth</code> after
-            adding tokens to <code className="rounded bg-white/80 px-1 py-0.5 text-[10px]">.env.local</code> (see{" "}
-            <code className="rounded bg-white/80 px-1 py-0.5 text-[10px]">.env.example</code>).
-          </p>
-        </div>
-      )}
 
       <p className="text-center text-sm text-espresso-600">
         Already have an account?{" "}
