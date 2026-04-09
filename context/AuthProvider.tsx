@@ -21,11 +21,17 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+type AuthProviderProps = {
+  children: ReactNode;
+  /** Server snapshot from cookies (root layout) — must match first client render for hydration. */
+  initialSession: Session | null;
+};
+
+export function AuthProvider({ children, initialSession }: AuthProviderProps) {
   const supabase = useMemo(() => createClient(), []);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(initialSession?.user ?? null);
+  const [session, setSession] = useState<Session | null>(initialSession);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const {
@@ -33,13 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
-      setLoading(false);
     });
 
-    void supabase.auth.getSession().then(({ data: { session: initial } }) => {
-      setSession(initial);
-      setUser(initial?.user ?? null);
-      setLoading(false);
+    void supabase.auth.getSession().then(({ data: { session: latest } }) => {
+      setSession(latest);
+      setUser(latest?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
