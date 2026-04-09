@@ -23,7 +23,7 @@ export function AuthNav() {
   return (
     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
       <Link
-        href="/signup"
+        href="/login?mode=signup"
         className="inline-flex min-h-11 min-w-[4.75rem] items-center justify-center rounded-full border border-espresso-200 bg-white px-3 text-xs font-semibold text-espresso-800 shadow-sm transition active:scale-[0.98] hover:border-espresso-300 hover:bg-crema sm:min-h-0 sm:min-w-0 sm:py-2 md:px-4 md:text-sm"
       >
         Signup

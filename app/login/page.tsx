@@ -1,7 +1,7 @@
 import { safeInternalPath } from "@/lib/auth-routes";
-import { LoginForm } from "./login-form";
+import { AuthScreen } from "@/components/auth-screen";
 
-type SearchParams = Promise<{ next?: string; error?: string; hint?: string }>;
+type SearchParams = Promise<{ next?: string; error?: string; hint?: string; mode?: string }>;
 
 function messageForAuthError(error: string | undefined, hintRaw: string | undefined): string | null {
   if (!error) return null;
@@ -33,10 +33,16 @@ export default async function LoginPage(props: { searchParams: SearchParams }) {
   const params = await props.searchParams;
   const nextPath = safeInternalPath(params.next, "/dashboard");
   const initialError = messageForAuthError(params.error, params.hint);
+  const initialTab = params.mode === "signup" ? "signup" : "signin";
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-7xl flex-col items-center justify-center px-6 py-16 lg:px-8">
-      <LoginForm nextPath={nextPath} initialError={initialError} showRedirectHint={!!params.error} />
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-7xl flex-col items-center justify-center bg-zinc-50/80 px-6 py-16 lg:px-8">
+      <AuthScreen
+        nextPath={nextPath}
+        initialTab={initialTab}
+        initialError={initialError}
+        showRedirectHint={!!params.error}
+      />
     </div>
   );
 }

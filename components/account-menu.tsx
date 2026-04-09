@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
 import {
@@ -67,6 +66,7 @@ export function AccountMenu() {
     <>
       <Link
         href="/dashboard"
+        prefetch={false}
         className={rowClass}
         role="menuitem"
         onClick={() => setOpen(false)}
@@ -100,13 +100,14 @@ export function AccountMenu() {
         aria-label={`Account menu, signed in as ${label}`}
       >
         {avatarUrl ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element -- remote OAuth avatars; avoids Image optimizer / hostname edge cases
+          <img
             src={avatarUrl}
             alt=""
             width={32}
             height={32}
             className="h-8 w-8 shrink-0 rounded-full object-cover"
-            unoptimized
+            referrerPolicy="no-referrer"
           />
         ) : (
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-espresso-100 text-[11px] font-semibold leading-none text-espresso-700">

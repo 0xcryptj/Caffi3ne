@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { accountAvatarUrl, navbarAccountInitial, navbarAccountLabel } from "@/lib/account-display";
 import { useAuth } from "@/context/AuthProvider";
@@ -19,13 +18,14 @@ export function DashboardContent() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             {src ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element -- OAuth avatar URLs
+              <img
                 src={src}
                 alt=""
                 width={56}
                 height={56}
                 className="h-14 w-14 rounded-full border border-espresso-200 object-cover"
-                unoptimized
+                referrerPolicy="no-referrer"
               />
             ) : (
               <div
