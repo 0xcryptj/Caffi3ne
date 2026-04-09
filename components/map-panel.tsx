@@ -249,7 +249,7 @@ export function MapPanel({ shops, mapHeight }: MapPanelProps) {
         {status === "error" && (
           <div className="absolute inset-0 grid place-items-center bg-[#e8dcc8]">
             <p className="max-w-xs text-center text-sm text-espresso-500">
-              Map unavailable — enable <strong>Maps JavaScript API</strong> in Google Cloud Console
+              Map can&apos;t load right now. Check that the site&apos;s map key is configured for this domain.
             </p>
           </div>
         )}

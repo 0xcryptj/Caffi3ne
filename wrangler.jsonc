@@ -1,4 +1,6 @@
 {
+	// Hardening: in the Cloudflare dashboard, proxy DNS (orange cloud), enable bot management / WAF
+	// for your zone, and set REQUIRE_CLOUDFLARE_PROXY=true in Worker env once traffic only flows via CF.
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
 	"name": "caffi3ne",

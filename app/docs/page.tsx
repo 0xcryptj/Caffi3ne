@@ -113,9 +113,9 @@ const insightSchemaExample = `{
     "rawInputs": { "temperatureF": 68, "precipProbability": 0.05 }
   },
   "explanation": [
-    "Traffic near this location is above average for the time of day.",
-    "Current weather (partly cloudy, 68°F) slightly favours indoor café visits.",
-    "Saturday afternoon is historically a peak period."
+    "Visit patterns for this hour sit above typical busyness for this venue.",
+    "Live contextual signals are blended into the score on each request.",
+    "Saturday afternoon is weighted as a historically stronger period."
   ],
   "updatedAt": "2026-03-14T15:30:00.000Z"
 }`;
@@ -179,7 +179,7 @@ export default function DocsPage() {
               Coffee Intelligence API
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-espresso-600">
-              A clean REST API for discovering nearby coffee shops, fetching rich shop metadata, and querying real-time crowd intelligence. Powered by Google Places and blended weather, traffic, and time-of-day signals.
+              A clean REST API for discovering nearby coffee shops, fetching rich shop metadata, and querying real-time crowd intelligence. Underlying data providers and scoring details are not public — responses are normalized Caffi3ne outputs only.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <InfoPill label="Base URL" value="https://your-domain.com" />
@@ -266,10 +266,10 @@ export default function DocsPage() {
           <section id="shop-detail" className="scroll-mt-24 space-y-5">
             <EndpointHeader method="GET" path="/api/shops/:id" summary="Full shop profile" />
             <p className="text-sm leading-7 text-espresso-600">
-              Returns the complete Shop object for a Google Place ID — photos, hours, contact info, editorial summary, and price level.
+              Returns the complete Shop object for a place identifier — photos, hours, contact info, editorial summary, and price level.
             </p>
             <ParamsTable params={[
-              { name: "id", type: "string", req: true, desc: "Google Place ID from the nearby endpoint (e.g. ChIJ…)" }
+              { name: "id", type: "string", req: true, desc: "Place id from the nearby endpoint (e.g. ChIJ…)" }
             ]} />
             <TryIt endpoint="/api/shops/ChIJl_lBhJYGoYgRe6mGgLdOBGQ" params={[]} />
             <CodeBlock tabs={shopExamples} />
@@ -282,7 +282,7 @@ export default function DocsPage() {
               Returns a busyness score (0–100), a label, and the full signal breakdown. Scores blend weather, traffic, time-of-day, and day-of-week. Refreshes every 60 s.
             </p>
             <ParamsTable params={[
-              { name: "id", type: "string", req: true, desc: "Google Place ID" }
+              { name: "id", type: "string", req: true, desc: "Place id" }
             ]} />
             <TryIt endpoint="/api/shops/ChIJl_lBhJYGoYgRe6mGgLdOBGQ/insights" params={[]} />
             <CodeBlock tabs={insightsExamples} />

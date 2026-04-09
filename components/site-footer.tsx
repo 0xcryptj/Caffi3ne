@@ -23,8 +23,8 @@ const groups = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-espresso-100 bg-[#1a0f07] text-espresso-200">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="border-t border-espresso-100 bg-[#1a0f07] pb-[env(safe-area-inset-bottom,0px)] text-espresso-200">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <p className="font-display text-lg text-crema">Caffi3ne</p>
@@ -33,12 +33,12 @@ export function SiteFooter() {
             </p>
             <div className="mt-4 flex items-center gap-1.5 text-xs text-espresso-500">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Live data · Google Places · Tomorrow.io · TomTom · BestTime
+              Live crowd estimates · refreshed as you browse
             </div>
             <div className="mt-6">
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-espresso-500">Feedback</p>
               <p className="mt-1.5 text-xs leading-5 text-espresso-400">
-                Report a bug or share a suggestion — call or text our Google Voice line.
+                Report a bug or share a suggestion — call or text our support line.
               </p>
               <a
                 href="tel:+14706706763"
@@ -74,7 +74,7 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-3 border-t border-espresso-800 pt-6 text-xs text-espresso-600 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Caffi3ne. All rights reserved.</p>
-          <p>Data partners: Google · Tomorrow.io · TomTom · BestTime.app</p>
+          <p className="text-espresso-500">Estimates are proprietary; not for redistribution or automated harvesting.</p>
         </div>
       </div>
     </footer>

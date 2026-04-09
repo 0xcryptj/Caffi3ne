@@ -238,31 +238,39 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const fillEndPct = radius <= 0 ? 0 : thumbCenterPct(radius);
 
   return (
-    <div className="w-full min-w-0 space-y-5">
+    <div
+      className={`w-full min-w-0 space-y-5 ${
+        radius > 0 ? "pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] lg:pb-0" : ""
+      }`}
+    >
 
       {/* ── Header card ────────────────────────────────────────────────── */}
-      <div className="animate-fade-in rounded-[2rem] border border-espresso-100 bg-white p-4 shadow-panel sm:p-6">
+      <div className="animate-fade-in rounded-3xl border border-espresso-100 bg-white p-3.5 shadow-panel sm:rounded-[2rem] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Nearby Intelligence</p>
-            <h1 className="mt-2 font-display text-2xl text-espresso-900 sm:text-3xl">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-espresso-500 sm:text-xs sm:tracking-[0.3em]">
+              Nearby Intelligence
+            </p>
+            <h1 className="mt-1.5 font-display text-[1.35rem] leading-tight text-espresso-900 sm:mt-2 sm:text-3xl sm:leading-snug">
               Coffee shops around you
             </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-espresso-600 sm:leading-7 sm:text-base">
+            <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-espresso-600 sm:text-base sm:leading-7">
               Discover nearby cafes, compare demand, and understand what&apos;s happening right now.
             </p>
           </div>
 
           {/* Status + weather pills */}
-          <div className="flex flex-wrap gap-2 sm:shrink-0 sm:justify-end">
-            <div className="flex min-w-0 items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5">
-              <LocateFixed className="h-3.5 w-3.5 shrink-0 text-espresso-500" />
-              <span className="min-w-0 max-w-[160px] truncate text-xs text-espresso-700">{status}</span>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:shrink-0 sm:justify-end">
+            <div className="flex min-w-0 flex-1 items-start gap-2 rounded-2xl bg-espresso-50 px-3 py-2 sm:max-w-none sm:flex-initial sm:items-center sm:rounded-full sm:py-1.5">
+              <LocateFixed className="mt-0.5 h-3.5 w-3.5 shrink-0 text-espresso-500 sm:mt-0" />
+              <span className="min-w-0 flex-1 text-xs leading-snug text-espresso-700 sm:max-w-[200px] sm:truncate">
+                {status}
+              </span>
             </div>
             {weather && (
-              <div className="flex items-center gap-1.5 rounded-full bg-espresso-50 px-3 py-1.5 text-xs text-espresso-700">
-                <span>{weather.conditionEmoji}</span>
-                <span className="truncate">
+              <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-espresso-50 px-3 py-2 text-xs text-espresso-700 sm:rounded-full sm:py-1.5">
+                <span className="text-lg leading-none sm:text-base">{weather.conditionEmoji}</span>
+                <span className="min-w-0 leading-snug sm:truncate">
                   {weather.tempF}°F · {weather.conditionLabel}
                   {weather.precipProbability > 10 ? ` · ${weather.precipProbability}%` : ""}
                 </span>
@@ -272,10 +280,11 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         </div>
 
         {/* ── Location mode toggle ──────────────────────────────────────── */}
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2 sm:mt-5">
           <button
+            type="button"
             onClick={() => { if (locationMode === "gps") requestGPS(); else switchMode("gps"); }}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
+            className={`flex min-h-11 min-w-[5.5rem] items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:py-1.5 ${
               locationMode === "gps"
                 ? "bg-espresso-800 text-crema shadow-sm"
                 : "bg-espresso-50 text-espresso-600 hover:bg-espresso-100"
@@ -285,8 +294,9 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
             GPS
           </button>
           <button
+            type="button"
             onClick={() => switchMode("zip")}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
+            className={`flex min-h-11 min-w-[5.5rem] items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:py-1.5 ${
               locationMode === "zip"
                 ? "bg-espresso-800 text-crema shadow-sm"
                 : "bg-espresso-50 text-espresso-600 hover:bg-espresso-100"
@@ -299,7 +309,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
 
         {/* ── Zip code input ────────────────────────────────────────────── */}
         {locationMode === "zip" && (
-          <div className="mt-3 flex gap-2 animate-slide-up">
+          <div className="mt-3 flex animate-slide-up flex-col gap-2 sm:flex-row sm:gap-2">
             <input
               type="text"
               inputMode="text"
@@ -307,12 +317,13 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
               value={zipInput}
               onChange={(e) => setZipInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleZipSearch()}
-              className="min-w-0 flex-1 rounded-xl border border-espresso-200 bg-white px-4 py-2.5 text-sm text-espresso-900 outline-none placeholder:text-espresso-300 focus:border-espresso-400 focus:ring-1 focus:ring-espresso-400/50 transition"
+              className="min-h-11 min-w-0 w-full rounded-xl border border-espresso-200 bg-white px-4 py-2.5 text-base text-espresso-900 outline-none placeholder:text-espresso-300 focus:border-espresso-400 focus:ring-1 focus:ring-espresso-400/50 sm:min-h-0 sm:flex-1 sm:text-sm"
             />
             <button
+              type="button"
               onClick={handleZipSearch}
               disabled={zipLoading || !zipInput.trim()}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl bg-espresso-800 px-4 py-2.5 text-sm font-semibold text-crema transition hover:bg-espresso-900 disabled:opacity-50"
+              className="flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-espresso-800 px-4 py-2.5 text-sm font-semibold text-crema transition hover:bg-espresso-900 active:scale-[0.99] disabled:opacity-50 sm:min-h-0"
             >
               {zipLoading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-crema/30 border-t-crema" />
@@ -393,43 +404,12 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
       {/* ── Results ──────────────────────────────────────────────────────── */}
       {radius > 0 && (
         <>
-          {/* Mobile List / Map toggle — hidden on desktop */}
-          <div className="flex gap-1 rounded-2xl bg-espresso-50 p-1 lg:hidden">
-            <button
-              onClick={() => setMobileView("list")}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                mobileView === "list"
-                  ? "bg-white text-espresso-900 shadow-sm"
-                  : "text-espresso-500 hover:text-espresso-700"
-              }`}
-            >
-              <LayoutList className="h-4 w-4" />
-              List
-              {shops.length > 0 && (
-                <span className="rounded-full bg-espresso-100 px-1.5 py-0.5 text-[10px] font-bold text-espresso-600 tabular-nums">
-                  {shops.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setMobileView("map")}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-all duration-200 ${
-                mobileView === "map"
-                  ? "bg-white text-espresso-900 shadow-sm"
-                  : "text-espresso-500 hover:text-espresso-700"
-              }`}
-            >
-              <Map className="h-4 w-4" />
-              Map
-            </button>
-          </div>
-
           <div className="grid w-full min-w-0 gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             {/* List — full width on mobile (hidden when map tab active), left col on desktop */}
             <div
               className={`w-full min-w-0 ${mobileView === "map" ? "hidden lg:block" : "block"}`}
             >
-              <div className="space-y-3 pb-20 lg:pb-0">
+              <div className="space-y-3 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] lg:pb-0">
                 {loading && shops.length === 0 && (
                   <div className="space-y-3">
                     {[0, 1, 2, 3].map((i) => (
@@ -458,8 +438,46 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
             <div className={`${mobileView === "list" ? "hidden lg:block" : "block"} animate-fade-in`}>
               <MapPanel
                 shops={shops}
-                mapHeight="h-[calc(100svh-200px)] lg:h-[420px]"
+                mapHeight="min-h-[52svh] h-[min(70svh,32rem)] lg:min-h-[420px] lg:h-[420px]"
               />
+            </div>
+          </div>
+
+          {/* Mobile: thumb-friendly List / Map bar fixed above home indicator */}
+          <div
+            className="fixed inset-x-0 bottom-0 z-30 border-t border-espresso-100/90 bg-canvas/95 px-3 pt-2 shadow-[0_-6px_28px_rgba(38,25,14,0.1)] backdrop-blur-md supports-[backdrop-filter]:bg-canvas/85 lg:hidden"
+            style={{ paddingBottom: "max(0.65rem, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <div className="mx-auto flex max-w-7xl gap-1.5 rounded-2xl bg-espresso-50/95 p-1.5">
+              <button
+                type="button"
+                onClick={() => setMobileView("list")}
+                className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.99] ${
+                  mobileView === "list"
+                    ? "bg-white text-espresso-900 shadow-sm"
+                    : "text-espresso-500 hover:text-espresso-700"
+                }`}
+              >
+                <LayoutList className="h-4 w-4 shrink-0" />
+                List
+                {shops.length > 0 && (
+                  <span className="rounded-full bg-espresso-100 px-1.5 py-0.5 text-[10px] font-bold text-espresso-600 tabular-nums">
+                    {shops.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileView("map")}
+                className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.99] ${
+                  mobileView === "map"
+                    ? "bg-white text-espresso-900 shadow-sm"
+                    : "text-espresso-500 hover:text-espresso-700"
+                }`}
+              >
+                <Map className="h-4 w-4 shrink-0" />
+                Map
+              </button>
             </div>
           </div>
         </>

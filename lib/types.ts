@@ -1,3 +1,17 @@
+/** Row in `public.profiles` (see supabase/profiles-schema.sql). */
+export type Profile = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  email: string | null;
+  display_name: string | null;
+  username: string | null;
+  onboarding_completed: boolean;
+  home_city: string | null;
+  preferred_radius: number | null;
+  role: string;
+};
+
 export type BusynessLabel =
   | "Below Average"
   | "Average"
@@ -20,7 +34,7 @@ export interface Shop {
   hours: string[];
   /** true = open now, false = closed now, undefined = unknown */
   isOpenNow?: boolean;
-  /** UTC offset in minutes for the shop's local timezone (from Google Places) */
+  /** UTC offset in minutes for the shop's local timezone when known */
   utcOffsetMinutes?: number;
   distanceMiles?: number;
   tags: string[];
@@ -28,7 +42,7 @@ export interface Shop {
   photos?: string[]; // resource names: "places/{id}/photos/{ref}"
   editorialSummary?: string;
   source?: "google";
-  /** Order/service options from Google Places */
+  /** Order / service options when available from listing metadata */
   ordering?: OrderingInfo;
 }
 
@@ -38,7 +52,7 @@ export interface OrderingInfo {
   dineIn: boolean;
   curbsidePickup: boolean;
   reservable?: boolean;
-  /** Google Maps ordering page URI — opens DoorDash / Uber Eats / Toast options */
+  /** Deep link to the venue’s ordering / reservation flow when available */
   ordersUri?: string;
   /** Ordering platform detected from the shop's website URL */
   detectedPlatform?: string;
@@ -52,7 +66,7 @@ export interface PopularTimesHour {
 }
 
 export interface PopularTimesDay {
-  dayInt: number;   // 0=Mon … 6=Sun (BestTime.app convention)
+  dayInt: number;   // 0=Mon … 6=Sun
   dayText: string;
   hours: PopularTimesHour[];
 }
@@ -85,7 +99,7 @@ export interface CrowdInsight {
   breakdown: ExternalSignals;
   explanation: string[];
   updatedAt: string;
-  /** Real foot traffic data from BestTime.app — powers the Popular Times chart */
+  /** Historical visit intensity by hour — powers the Popular Times chart when present */
   popularTimes?: PopularTimes;
 }
 

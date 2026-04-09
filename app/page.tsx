@@ -40,7 +40,7 @@ export default function LandingPage() {
   return (
     <div>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-hero-glow">
+      <section className="relative min-h-[100svh] overflow-hidden bg-hero-glow">
 
         {/* Aurora — warm espresso flow */}
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-35">
@@ -54,7 +54,7 @@ export default function LandingPage() {
 
         {/* Dither steam — WebGL Perlin noise, cream bg + brown pixels */}
         {/* bg-crema is the cream fallback shown instantly before WebGL canvas loads */}
-        <div className="absolute inset-0 -z-10 bg-crema">
+        <div className="pointer-events-none absolute inset-0 -z-10 min-h-full min-w-full bg-crema">
           <DitherBg />
         </div>
 
@@ -150,10 +150,10 @@ export default function LandingPage() {
         <section className="border-y border-espresso-100 bg-white">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-0 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
             {[
-              { label: "Live signals",  value: "4+",  sub: "weather, traffic, time, foot traffic" },
-              { label: "Data sources",  value: "4",   sub: "Google, Tomorrow.io, TomTom, BestTime" },
-              { label: "Crowd labels",  value: "4",   sub: "Below · Avg · Busy · Packed" },
-              { label: "Updates",       value: "Live", sub: "real provider data per request" },
+              { label: "Live signals", value: "4+", sub: "demand, context, rhythm, venue history" },
+              { label: "Fusion", value: "Multi", sub: "one score from many signal layers" },
+              { label: "Crowd labels", value: "4", sub: "Below · Avg · Busy · Packed" },
+              { label: "Updates", value: "Live", sub: "refreshed when you load a view" },
             ].map((stat, i) => (
               <ScrollFade key={stat.label} delay={i * 80}>
                 <div className="border-r border-espresso-100 px-6 py-8 last:border-r-0 odd:border-b md:odd:border-b-0">

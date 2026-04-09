@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { safeInternalPath } from "@/lib/auth-routes";
 import { getRequestOrigin } from "@/lib/get-request-origin";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/utils/supabase/env";
 
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
   const url = request.nextUrl;
   const code = url.searchParams.get("code");
   const nextRaw = url.searchParams.get("next");
-  const next = nextRaw?.startsWith("/") ? nextRaw : "/dashboard";
+  const next = safeInternalPath(nextRaw, "/dashboard");
   const origin = getRequestOrigin(request);
 
   if (!code) {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { PopularTimes } from "@/lib/types";
 
-// BestTime.app uses 0=Monday … 6=Sunday
+// Weekday index in dataset: 0=Monday … 6=Sunday
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 // Format hour number → compact label
@@ -17,7 +17,7 @@ interface Props {
   popularTimes: PopularTimes;
   /** Current local hour at the shop (0–23) */
   currentHour: number;
-  /** Current BestTime day at the shop (0=Mon … 6=Sun) */
+  /** Current local weekday index for the chart (0=Mon … 6=Sun) */
   currentBtDay: number;
 }
 
@@ -130,7 +130,7 @@ export function PopularTimesChart({ popularTimes, currentHour, currentBtDay }: P
       )}
 
       <p className="mt-2 text-[10px] text-espresso-400">
-        Historical foot traffic · BestTime.app
+        Typical visit intensity by hour (historical patterns for this venue)
       </p>
     </div>
   );

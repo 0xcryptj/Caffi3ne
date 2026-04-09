@@ -1,13 +1,14 @@
+import { safeInternalPath } from "@/lib/auth-routes";
 import { LoginForm } from "./login-form";
 
 type SearchParams = Promise<{ next?: string; error?: string }>;
 
 export default async function LoginPage(props: { searchParams: SearchParams }) {
   const params = await props.searchParams;
-  const nextPath = params.next?.startsWith("/") ? params.next : "/dashboard";
+  const nextPath = safeInternalPath(params.next, "/dashboard");
   const initialError =
     params.error === "callback"
-      ? "Could not finish sign-in. For Google, add https://your-domain/auth/callback to Supabase → Authentication → Redirect URLs (and use only Supabase’s callback URL in Google Cloud OAuth). You can still use the magic link."
+      ? "Could not finish login. For Google, add https://your-domain/auth/callback to Supabase → Authentication → Redirect URLs (and use only Supabase’s callback URL in Google Cloud OAuth). You can still use the magic link."
       : null;
 
   return (

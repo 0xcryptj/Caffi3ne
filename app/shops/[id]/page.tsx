@@ -78,7 +78,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
   const photos = shop.photos ?? [];
   const chain = isChain(shop.website);
 
-  // For the Popular Times chart: compute the current local hour + BestTime day
+  // For the Popular Times chart: current local hour + weekday index (Mon=0 … Sun=6)
   const currentLocalHour = getLocalHour(shop.utcOffsetMinutes);
   const currentBtDay     = getBestTimeCurrentDay(shop.utcOffsetMinutes);
 
@@ -177,7 +177,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
                 )}
               </div>
 
-              {/* Foot traffic — shows BestTime percentile when available, crowd score otherwise */}
+              {/* Foot traffic — percentile when historical patterns exist, model estimate otherwise */}
               <div className="rounded-2xl bg-crema p-4 sm:rounded-3xl sm:p-5">
                 <div className="flex items-center gap-1.5 text-xs text-espresso-500 sm:text-sm">
                   <TrendingUp className="h-3.5 w-3.5 shrink-0" />
@@ -197,7 +197,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
                     </div>
                     <p className="mt-1 truncate text-xs text-espresso-500">
                       {(insight.breakdown.rawInputs.bestTimeUsed as boolean | undefined)
-                        ? "BestTime.app"
+                        ? "Venue history"
                         : "Estimated"}
                     </p>
                   </>
@@ -210,7 +210,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
               </div>
 
               <div className="rounded-2xl bg-crema p-4 sm:rounded-3xl sm:p-5">
-                <p className="text-xs text-espresso-500 sm:text-sm">Google Rating</p>
+                <p className="text-xs text-espresso-500 sm:text-sm">Rating</p>
                 <p className="mt-2 text-3xl font-semibold text-espresso-900 sm:text-4xl">{shop.rating}</p>
                 <p className="mt-1 text-xs text-espresso-700 sm:text-sm">{shop.userRatingsTotal.toLocaleString()} reviews</p>
               </div>
@@ -485,7 +485,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
             <p className="mt-3 text-sm text-espresso-600 sm:mt-4 sm:text-base">
               Score blends weather, traffic, time-of-day, and day-of-week signals into a 0–100 busyness estimate.
               {(insight.breakdown.rawInputs.bestTimeUsed as boolean | undefined) && (
-                <> Time signal is sourced from <span className="font-semibold text-espresso-800">real historical foot traffic data</span> (BestTime.app) for this specific hour and day.</>
+                <> The time component uses <span className="font-semibold text-espresso-800">historical visit patterns</span> for this venue at this hour and day.</>
               )}
               {insight.waitMinutes && (
                 <> The <span className="font-semibold text-espresso-800">{insight.waitMinutes.label}</span> wait estimate is derived from that score plus the current time-of-day — rush hours extend the range.</>
@@ -528,7 +528,7 @@ export default async function ShopDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           <div className="rounded-2xl border border-espresso-100 bg-white p-5 shadow-panel sm:rounded-[2rem] sm:p-7">
-            <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Score sources</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Score notes</p>
             <ul className="mt-4 space-y-3 text-sm leading-7 text-espresso-600">
               {insight.explanation.map((item) => (
                 <li key={item}>{item}</li>

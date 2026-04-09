@@ -1,13 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
-import { accountPrimaryLabel, accountShortLabel } from "@/lib/account-display";
+import { AccountMenu } from "@/components/account-menu";
 import { useAuth } from "@/context/AuthProvider";
 
 export function AuthNav() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -18,57 +16,24 @@ export function AuthNav() {
     );
   }
 
-  if (!user) {
-    return (
-      <Link
-        href="/login"
-        className="shrink-0 rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-semibold text-espresso-800 transition hover:border-espresso-300 md:px-4 md:py-2 md:text-sm"
-      >
-        Sign in
-      </Link>
-    );
+  if (user) {
+    return <AccountMenu />;
   }
 
-  const avatarUrl = user.user_metadata?.avatar_url as string | undefined;
-  const fullLabel = accountPrimaryLabel(user);
-  const shortLabel = accountShortLabel(user);
-
   return (
-    <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
+    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
       <Link
-        href="/dashboard"
-        title={fullLabel}
-        aria-label={`Open dashboard (${fullLabel})`}
-        className="inline-flex h-9 max-w-[10rem] min-w-0 items-center gap-1.5 rounded-full border border-espresso-200/90 bg-white py-0.5 pl-0.5 pr-2.5 text-espresso-800 shadow-sm transition hover:border-espresso-300 md:h-10 md:max-w-[min(100%,18rem)] md:gap-2 md:pl-1 md:pr-3"
+        href="/signup"
+        className="inline-flex min-h-11 min-w-[4.75rem] items-center justify-center rounded-full border border-espresso-200 bg-white px-3 text-xs font-semibold text-espresso-800 shadow-sm transition active:scale-[0.98] hover:border-espresso-300 hover:bg-crema sm:min-h-0 sm:min-w-0 sm:py-2 md:px-4 md:text-sm"
       >
-        {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 shrink-0 rounded-full object-cover"
-            unoptimized
-          />
-        ) : (
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-espresso-100 text-[11px] font-semibold leading-none text-espresso-700">
-            {fullLabel.slice(0, 1).toUpperCase()}
-          </span>
-        )}
-        <span className="min-w-0 truncate text-xs font-medium leading-none md:hidden">{shortLabel}</span>
-        <span className="hidden min-w-0 truncate text-sm font-medium leading-none md:inline">
-          {fullLabel}
-        </span>
+        Signup
       </Link>
-      <button
-        type="button"
-        onClick={() => void signOut()}
-        className="hidden shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-espresso-600 underline-offset-2 transition hover:bg-espresso-50 hover:text-espresso-900 hover:underline md:inline-flex"
-        aria-label="Sign out"
+      <Link
+        href="/login"
+        className="inline-flex min-h-11 min-w-[4.25rem] items-center justify-center rounded-full px-3 text-xs font-semibold text-espresso-700 transition active:scale-[0.98] hover:bg-espresso-50 hover:text-espresso-900 sm:min-h-0 sm:min-w-0 sm:py-2 md:px-3 md:text-sm"
       >
-        <LogOut className="h-4 w-4 opacity-70" strokeWidth={2} />
-        Sign out
-      </button>
+        Login
+      </Link>
     </div>
   );
 }

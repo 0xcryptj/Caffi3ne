@@ -16,7 +16,7 @@ function locationVariance(shopId: string): number {
 
 /**
  * Returns the current hour in the shop's local timezone.
- * Uses utcOffsetMinutes if available (from Google Places); falls back to server local time.
+ * Uses venue utc offset when known; falls back to server local time.
  */
 export function getLocalHour(utcOffsetMinutes?: number, now = new Date()): number {
   if (utcOffsetMinutes !== undefined) {
@@ -73,9 +73,8 @@ const CLOSED_INSIGHT: CrowdInsight = {
 
 /**
  * @param shop        The shop to score.
- * @param options.withPopularTimes  Set true on the detail page to fetch BestTime
- *   foot-traffic data and include it in the insight (costs 1 BestTime credit per
- *   unique venue/day). Leave false (default) on list/nearby views to preserve credits.
+ * @param options.withPopularTimes  When true (detail page only), enriches the time signal
+ *   with venue historical visit patterns. Leave false on list/nearby to limit upstream usage.
  */
 export async function getCrowdInsightForShop(
   shop: Shop,
@@ -86,16 +85,14 @@ export async function getCrowdInsightForShop(
     return { ...CLOSED_INSIGHT, updatedAt: new Date().toISOString() };
   }
 
-  // BestTime is only fetched for detail pages (options.withPopularTimes === true)
-  // to avoid burning free-tier credits on every nearby-list request.
+  // Historical venue patterns: detail pages only (saves upstream usage on list views).
   const [weather, traffic, popularTimes] = await Promise.all([
     getWeatherSignal(shop.lat, shop.lng),
     getTrafficSignal(shop.lat, shop.lng),
     options?.withPopularTimes ? getPopularTimes(shop.name, shop.address) : Promise.resolve(null),
   ]);
 
-  // If BestTime data is available, use the actual historical percentile for the
-  // current day/hour instead of the static bracket table — far more accurate.
+  // When historical patterns exist for this venue, use the live percentile for local hour/day.
   const btPerc = popularTimes
     ? getBestTimeCurrentPerc(popularTimes, shop.utcOffsetMinutes)
     : null;
@@ -126,10 +123,10 @@ export async function getCrowdInsightForShop(
     breakdown,
     explanation: [
       btPerc !== null
-        ? `Popular times (BestTime.app): ${Math.round(btPerc)}th-percentile busy for this hour/day historically.`
-        : "Live score blends weather, traffic, and time-of-day demand signals.",
-      "Real-time traffic signal via TomTom Flow API.",
-      "Weather demand factor via Tomorrow.io Realtime API.",
+        ? `Visit patterns for this hour and day sit near the ${Math.round(btPerc)}th percentile of typical busyness for this venue.`
+        : "The score blends recurring weekly patterns with live contextual signals.",
+      "Mobility and area activity feed into the real-time part of the estimate.",
+      "Conditions that influence how often people go out are included in the blend.",
     ],
     popularTimes: popularTimes ?? undefined,
     updatedAt: new Date().toISOString()

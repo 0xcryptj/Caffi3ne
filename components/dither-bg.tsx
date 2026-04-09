@@ -274,10 +274,17 @@ export default function DitherBg({
 }: DitherBgProps) {
   return (
     <Canvas
-      style={{ display: "block", width: "100%", height: "100%" }}
-      className={className}
+      className={`absolute inset-0 block h-full w-full min-h-0 ${className}`}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        display: "block"
+      }}
       camera={{ position: [0, 0, 6] }}
-      dpr={1}
+      dpr={[1, 2]}
+      resize={{ scroll: false, debounce: 0 }}
       gl={{ antialias: false, preserveDrawingBuffer: false }}
     >
       <DitheredWaves

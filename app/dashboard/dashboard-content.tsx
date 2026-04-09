@@ -2,15 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { navbarAccountInitial, navbarAccountLabel } from "@/lib/account-display";
 import { useAuth } from "@/context/AuthProvider";
 import { DashboardSignOut } from "./sign-out-button";
 
 export function DashboardContent() {
-  const { user } = useAuth();
-  const src = user?.user_metadata?.avatar_url as string | undefined;
-  const displayName =
-    (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "Account";
-  const initial = displayName.slice(0, 1).toUpperCase();
+  const { user, profile } = useAuth();
+  if (!user) return null;
+  const src = user.user_metadata?.avatar_url as string | undefined;
+  const displayName = navbarAccountLabel(profile, user);
+  const initial = navbarAccountInitial(profile, user);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16 lg:px-8">
@@ -36,7 +37,14 @@ export function DashboardContent() {
             )}
             <div>
               <h1 className="font-display text-xl text-espresso-900">Dashboard</h1>
-              <p className="text-sm text-espresso-600">{user?.email}</p>
+              <p className="text-sm text-espresso-600">
+                {profile?.username ? (
+                  <span className="font-medium text-espresso-800">@{profile.username}</span>
+                ) : null}
+                {profile?.username && user.email ? <span className="text-espresso-400"> · </span> : null}
+                {user.email ? <span className="text-espresso-500">{user.email}</span> : null}
+                {!profile?.username && !user.email ? <span className="text-espresso-500">Account</span> : null}
+              </p>
             </div>
           </div>
           <DashboardSignOut />
