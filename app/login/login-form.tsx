@@ -76,14 +76,20 @@ export function LoginForm({ nextPath, initialError, showRedirectHint = false }: 
     setError(null);
     setGoogleLoading(true);
     try {
-      const msg = await startGoogleOAuth(supabase, nextPath);
-      if (msg) setError(msg);
+      const outcome = await startGoogleOAuth(supabase, nextPath);
+      if (outcome === "cancelled") return;
+      if (typeof outcome === "object") {
+        setError(outcome.error);
+        return;
+      }
+      router.replace(nextPath as Parameters<typeof router.replace>[0]);
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? formatAuthError({ message: e.message }) : "Google sign-in failed");
     } finally {
       setGoogleLoading(false);
     }
-  }, [supabase, nextPath]);
+  }, [supabase, nextPath, router]);
 
   const handleMagicLink = useCallback(
     async (e: React.FormEvent) => {

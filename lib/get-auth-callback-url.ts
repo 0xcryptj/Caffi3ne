@@ -12,14 +12,25 @@ export function getAuthRedirectOrigin(): string {
   return appConfig.appUrl.replace(/\/$/, "");
 }
 
+export type AuthCallbackOptions = {
+  /**
+   * Google popup OAuth uses `?popup=1` so the callback returns a small page that closes the window
+   * instead of loading the app inside the popup. Add to Supabase Redirect URLs, e.g.
+   * `https://caffi3ne.cc/auth/callback**` or the exact URL with `?popup=1`.
+   */
+  popup?: boolean;
+};
+
 /**
- * OAuth / magic-link / email-confirm redirect URL only — no query string.
- * Add this exact URL in Supabase → Authentication → URL configuration → Redirect URLs
- * (plus `http://localhost:3000/auth/callback` for local dev).
+ * OAuth / magic-link / email-confirm redirect URL.
+ * Add allowed URLs in Supabase → Authentication → URL configuration → Redirect URLs
+ * (e.g. `https://your-domain/auth/callback**` and `http://localhost:3000/auth/callback**`).
  *
  * Intended destination after login is stored in the `caffi3ne_auth_next` cookie (see `auth-return-path.ts`).
  */
-export function buildAuthCallbackUrl(): string {
+export function buildAuthCallbackUrl(opts?: AuthCallbackOptions): string {
   const origin = getAuthRedirectOrigin();
-  return `${origin}/auth/callback`;
+  const base = `${origin}/auth/callback`;
+  if (opts?.popup) return `${base}?popup=1`;
+  return base;
 }

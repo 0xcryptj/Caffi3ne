@@ -39,18 +39,23 @@ export function SignupForm({ nextPath }: Props) {
     setInfo(null);
     setGoogleLoading(true);
     try {
-      const msg = await startGoogleOAuth(
-        supabase,
-        safeInternalPath(nextPath, "/nearby"),
-        "/nearby"
+      const continuePath = safeInternalPath(nextPath, "/nearby");
+      const outcome = await startGoogleOAuth(supabase, continuePath, "/nearby");
+      if (outcome === "cancelled") return;
+      if (typeof outcome === "object") {
+        setError(outcome.error);
+        return;
+      }
+      router.replace(
+        `/onboarding?next=${encodeURIComponent(continuePath)}` as Parameters<typeof router.replace>[0]
       );
-      if (msg) setError(msg);
+      router.refresh();
     } catch (e) {
       setError(e instanceof Error ? formatAuthError({ message: e.message }) : "Google sign-up failed");
     } finally {
       setGoogleLoading(false);
     }
-  }, [supabase, nextPath]);
+  }, [supabase, nextPath, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
