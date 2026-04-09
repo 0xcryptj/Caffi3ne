@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     const nextFromAuth = safeInternalPathOrNull(request.nextUrl.searchParams.get("next"));
     if (onboardingCompleted) {
-      url.pathname = nextFromAuth ?? "/dashboard";
+      url.pathname = nextFromAuth ?? "/";
       url.search = "";
     } else {
       url.pathname = "/onboarding";

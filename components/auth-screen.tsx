@@ -244,7 +244,7 @@ export function AuthScreen({
     setMagicLoading(true);
     setMagicSent(false);
     try {
-      setAuthReturnPathClient(nextPath, "/dashboard");
+      setAuthReturnPathClient(nextPath, "/");
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: {

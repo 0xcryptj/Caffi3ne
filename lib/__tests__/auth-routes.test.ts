@@ -46,7 +46,7 @@ describe("safeInternalPathOrNull", () => {
 
 describe("safeInternalPath", () => {
   it("uses fallback when invalid", () => {
-    expect(safeInternalPath("//x", "/dashboard")).toBe("/dashboard");
+    expect(safeInternalPath("//x", "/")).toBe("/");
     expect(safeInternalPath(null, "/nearby")).toBe("/nearby");
   });
 });

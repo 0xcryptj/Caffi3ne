@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Coffee, LayoutList, LocateFixed, Map, MapPin, Search } from "lucide-react";
+import { Coffee, LayoutList, LocateFixed, Map, MapPin } from "lucide-react";
+import { LocationSearchRow } from "@/components/location-search-input";
 import { MapPanel } from "@/components/map-panel";
 import { ShopCard } from "@/components/shop-card";
 import { getThumbCenterPercent, RANGE_THUMB_WIDTH_PX } from "@/lib/slider-geometry";
@@ -25,13 +26,15 @@ interface NearbyDashboardProps {
   initialShops: ShopWithInsight[];
 }
 
-type LocationMode = "gps" | "zip";
+type LocationMode = "gps" | "search";
 
 const RADIUS_MIN = 0;
 const RADIUS_MAX = 25;
 /** Matches tick marks; slider snaps to these values only. */
 const RADIUS_STEP = 5;
 const RADIUS_TICKS = [0, 5, 10, 15, 20, 25] as const;
+/** After a place search, pre-select 5 mi so users do not need to move the slider. */
+const DEFAULT_PLACE_SEARCH_RADIUS_MI = 5;
 
 export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [shops, setShops] = useState(initialShops);
@@ -41,9 +44,6 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [loading, setLoading] = useState(false);
   const [locationMode, setLocationMode] = useState<LocationMode>("gps");
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
-  const [zipInput, setZipInput] = useState("");
-  const [zipLoading, setZipLoading] = useState(false);
-
   // null until a location is confirmed — no hardcoded fallback city
   const coordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const radiusRef = useRef(0);
@@ -124,7 +124,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         applyLocation(loc.lat, loc.lng, "Approximate location · allow GPS for accuracy", false);
       })
       .catch(() => {
-        if (!locationReadyRef.current) setStatus("Location unavailable — try ZIP search");
+        if (!locationReadyRef.current) setStatus("Location unavailable — try place search");
       });
 
     // GPS: precise location — overwrites IP result once user grants permission.
@@ -161,7 +161,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   // Useful if they denied on first load and want to retry, or to refresh location.
   const requestGPS = useCallback(() => {
     if (!navigator.geolocation) {
-      setStatus("GPS not available — try ZIP search");
+      setStatus("GPS not available — try place search");
       return;
     }
     setStatus("Requesting GPS…");
@@ -170,32 +170,11 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
         applyLocation(pos.coords.latitude, pos.coords.longitude, "Using your location", true);
       },
       () => {
-        if (!locationReadyRef.current) setStatus("Location unavailable — try ZIP search");
+        if (!locationReadyRef.current) setStatus("Location unavailable — try place search");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, [applyLocation]);
-
-  const handleZipSearch = async () => {
-    if (!zipInput.trim()) return;
-    setZipLoading(true);
-    try {
-      const res = await fetch(`/api/geocode?address=${encodeURIComponent(zipInput)}`);
-      if (!res.ok) throw new Error("Not found");
-      const data = (await res.json()) as { lat: number; lng: number; formattedAddress: string };
-      coordsRef.current = { lat: data.lat, lng: data.lng };
-      locationReadyRef.current = true;
-      setStatus(data.formattedAddress);
-      fetchWeather(data.lat, data.lng);
-      if (radiusRef.current > 0) {
-        doFetch(data.lat, data.lng, radiusRef.current);
-      }
-    } catch {
-      setStatus("ZIP not found — try again");
-    } finally {
-      setZipLoading(false);
-    }
-  };
 
   /** Single source of truth: slider value === React state === API miles (0,5,…,25). */
   const applyRadius = useCallback(
@@ -220,9 +199,33 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     [doFetch]
   );
 
+  const applySearchPlace = useCallback(
+    async (payload: { lat: number; lng: number; formattedAddress: string; query: string }) => {
+      coordsRef.current = { lat: payload.lat, lng: payload.lng };
+      locationReadyRef.current = true;
+      setStatus(payload.formattedAddress);
+      fetchWeather(payload.lat, payload.lng);
+      applyRadius(DEFAULT_PLACE_SEARCH_RADIUS_MI);
+      void fetch("/api/user/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          latitude: payload.lat,
+          longitude: payload.lng,
+          source: "general",
+          metadata: {
+            context: "place_search",
+            query: payload.query,
+            formattedAddress: payload.formattedAddress
+          }
+        })
+      });
+    },
+    [applyRadius, fetchWeather]
+  );
+
   const switchMode = (mode: LocationMode) => {
     setLocationMode(mode);
-    setZipInput("");
     if (mode === "gps") {
       locationReadyRef.current = false;
       gpsResolvedRef.current = false;
@@ -295,44 +298,24 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
           </button>
           <button
             type="button"
-            onClick={() => switchMode("zip")}
+            onClick={() => switchMode("search")}
             className={`flex min-h-11 min-w-[5.5rem] items-center justify-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:py-1.5 ${
-              locationMode === "zip"
+              locationMode === "search"
                 ? "bg-espresso-800 text-crema shadow-sm"
                 : "bg-espresso-50 text-espresso-600 hover:bg-espresso-100"
             }`}
           >
             <MapPin className="h-3 w-3" />
-            Zip Code
+            Search place
           </button>
         </div>
 
-        {/* ── Zip code input ────────────────────────────────────────────── */}
-        {locationMode === "zip" && (
-          <div className="mt-3 flex animate-slide-up flex-col gap-2 sm:flex-row sm:gap-2">
-            <input
-              type="text"
-              inputMode="text"
-              placeholder="Enter ZIP or city name"
-              value={zipInput}
-              onChange={(e) => setZipInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleZipSearch()}
-              className="min-h-11 min-w-0 w-full rounded-xl border border-espresso-200 bg-white px-4 py-2.5 text-base text-espresso-900 outline-none placeholder:text-espresso-300 focus:border-espresso-400 focus:ring-1 focus:ring-espresso-400/50 sm:min-h-0 sm:flex-1 sm:text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleZipSearch}
-              disabled={zipLoading || !zipInput.trim()}
-              className="flex min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-espresso-800 px-4 py-2.5 text-sm font-semibold text-crema transition hover:bg-espresso-900 active:scale-[0.99] disabled:opacity-50 sm:min-h-0"
-            >
-              {zipLoading ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-crema/30 border-t-crema" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              Search
-            </button>
-          </div>
+        {locationMode === "search" && (
+          <LocationSearchRow
+            key="place-search-panel"
+            onLocationResolved={applySearchPlace}
+            onError={(msg) => setStatus(msg)}
+          />
         )}
 
         {/* ── Radius slider (native range = source of truth; fill + ticks share same 0–100% scale) ─ */}
@@ -384,7 +367,9 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
               </span>
             ))}
           </div>
-          <p className="mt-1 text-center text-[9px] text-espresso-400 sm:text-[10px]">5-mile steps</p>
+          <p className="mt-1 text-center text-[9px] text-espresso-400 sm:text-[10px]">
+            5-mile steps · same scale everywhere (not country-specific)
+          </p>
         </div>
       </div>
 

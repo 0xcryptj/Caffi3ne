@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address") ?? "";
+  const placeId = searchParams.get("placeId")?.trim() ?? "";
+  const language = searchParams.get("lang")?.trim();
 
-  if (!address.trim()) {
-    return NextResponse.json({ error: "address is required" }, { status: 400 });
+  if (!placeId && !address.trim()) {
+    return NextResponse.json({ error: "address or placeId is required" }, { status: 400 });
   }
 
   const apiKey = process.env.GOOGLE_API_KEY;
@@ -14,8 +16,15 @@ export async function GET(request: Request) {
   }
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
-    const res = await fetch(url, { next: { revalidate: 3600 } });
+    let url: string;
+    if (placeId) {
+      url = `https://maps.googleapis.com/maps/api/geocode/json?place_id=${encodeURIComponent(placeId)}&key=${encodeURIComponent(apiKey)}`;
+    } else {
+      url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${encodeURIComponent(apiKey)}`;
+    }
+    if (language) url += `&language=${encodeURIComponent(language)}`;
+
+    const res = await fetch(url, { cache: "no-store" });
     const data = (await res.json()) as {
       status: string;
       results: Array<{

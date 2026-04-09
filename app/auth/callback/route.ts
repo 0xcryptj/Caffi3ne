@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       nextFromCookie = null;
     }
   }
-  const next = safeInternalPath(nextFromQuery ?? nextFromCookie, "/dashboard");
+  const next = safeInternalPath(nextFromQuery ?? nextFromCookie, "/");
 
   const redirectTarget = `${origin}${next}`;
   const successResponse = isPopup

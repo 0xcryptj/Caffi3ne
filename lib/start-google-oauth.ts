@@ -19,7 +19,7 @@ let oauthFlowInProgress = false;
 export async function startGoogleOAuth(
   supabase: SupabaseClient,
   nextPath: string,
-  nextFallback: string = "/dashboard"
+  nextFallback: string = "/"
 ): Promise<GoogleOAuthOutcome> {
   if (oauthFlowInProgress) {
     return "cancelled";

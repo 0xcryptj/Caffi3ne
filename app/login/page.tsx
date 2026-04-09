@@ -51,7 +51,7 @@ function infoForLoginMessage(message: string | undefined): string | null {
 
 export default async function LoginPage(props: { searchParams: SearchParams }) {
   const params = await props.searchParams;
-  const nextPath = safeInternalPath(params.next, "/dashboard");
+  const nextPath = safeInternalPath(params.next, "/");
   const initialError = messageForAuthError(params.error, params.hint);
   const initialInfo = infoForLoginMessage(params.message);
   const initialTab = params.mode === "signup" ? "signup" : "signin";
