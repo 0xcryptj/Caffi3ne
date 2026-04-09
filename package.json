@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "node scripts/check-production-auth-env.mjs && next build",
+    "check:auth-env": "node scripts/check-production-auth-env.mjs",
     "dev": "next dev",
     "start": "next start",
     "lint": "next lint",
