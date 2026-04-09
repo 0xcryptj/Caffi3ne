@@ -35,6 +35,18 @@ export function SiteFooter() {
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               Live data · Google Places · Tomorrow.io · TomTom · BestTime
             </div>
+            <div className="mt-6">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-espresso-500">Feedback</p>
+              <p className="mt-1.5 text-xs leading-5 text-espresso-400">
+                Report a bug or share a suggestion — call or text our Google Voice line.
+              </p>
+              <a
+                href="tel:+14706706763"
+                className="mt-2 inline-block text-sm font-medium text-crema transition hover:text-crema/90 hover:underline"
+              >
+                (470) 670-6763
+              </a>
+            </div>
           </div>
 
           {groups.map(({ group, items }) => (
