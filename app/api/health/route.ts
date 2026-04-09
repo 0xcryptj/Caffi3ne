@@ -5,7 +5,7 @@ export async function GET() {
   return NextResponse.json({
     status: "ok",
     app: appConfig.name,
-    mockMode: appConfig.useMockData,
+    liveData: !appConfig.useMockData,
     timestamp: new Date().toISOString()
   });
 }

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { addMockSubmission } from "@/lib/data/mock-shops";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { MerchantSubmissionInput } from "@/lib/types";
 
@@ -11,17 +10,49 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseServerClient();
-
-  if (supabase) {
-    // TODO: Persist to merchant_submissions in Supabase when auth and project config are live.
+  if (!supabase) {
+    return NextResponse.json(
+      {
+        error:
+          "Submissions are unavailable: configure SUPABASE_SERVICE_ROLE_KEY on the server (never expose it to the client)."
+      },
+      { status: 503 }
+    );
   }
 
-  const record = addMockSubmission(payload);
+  const typeTag = `[${payload.submissionType}]`;
+  const notes = [typeTag, payload.existingShopId ? `shop:${payload.existingShopId}` : "", payload.notes ?? ""]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const { data, error } = await supabase
+    .from("merchant_submissions")
+    .insert({
+      submitted_name: payload.submittedName,
+      submitted_address: payload.submittedAddress,
+      lat: payload.lat ?? null,
+      lng: payload.lng ?? null,
+      website: payload.website ?? null,
+      contact_email: payload.contactEmail,
+      notes: notes || null,
+      status: "pending"
+    })
+    .select("id, submitted_name, submitted_address, contact_email, status, created_at")
+    .single();
+
+  if (error) {
+    console.error("merchant_submissions insert:", error);
+    return NextResponse.json(
+      { error: "Could not save your submission. Check the database schema and service role access." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json(
     {
-      data: record,
-      message: "Merchant submission queued"
+      data,
+      message: "Submission received. We will follow up by email."
     },
     { status: 201 }
   );

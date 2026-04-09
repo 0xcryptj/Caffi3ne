@@ -27,7 +27,7 @@ export interface Shop {
   priceLevel?: PriceLevel;
   photos?: string[]; // resource names: "places/{id}/photos/{ref}"
   editorialSummary?: string;
-  source?: "mock" | "google";
+  source?: "google";
   /** Order/service options from Google Places */
   ordering?: OrderingInfo;
 }
@@ -121,6 +121,7 @@ export interface ApiExampleResponse {
   data: ShopWithInsight[];
   meta: {
     generatedAt: string;
-    mockMode: boolean;
+    /** Static sample payload for documentation only */
+    isDemoSample: boolean;
   };
 }

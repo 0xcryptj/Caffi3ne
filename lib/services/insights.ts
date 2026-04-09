@@ -1,6 +1,5 @@
 import { calculateCrowdScore, estimateWait, toLabel } from "@/lib/crowd-score";
 import { clamp } from "@/lib/utils";
-import { getMockInsightForShop } from "@/lib/data/mock-shops";
 import { getTrafficSignal } from "@/lib/services/traffic";
 import { getWeatherSignal } from "@/lib/services/weather";
 import { getBestTimeCurrentPerc, getPopularTimes } from "@/lib/services/besttime";
@@ -85,10 +84,6 @@ export async function getCrowdInsightForShop(
   // Closed shops always score 0 — never rank as live recommendations
   if (shop.isOpenNow === false) {
     return { ...CLOSED_INSIGHT, updatedAt: new Date().toISOString() };
-  }
-
-  if (process.env.USE_MOCK_DATA !== "false") {
-    return getMockInsightForShop(shop.id);
   }
 
   // BestTime is only fetched for detail pages (options.withPopularTimes === true)

@@ -30,14 +30,16 @@ export function MerchantForm() {
         body: JSON.stringify(form)
       });
 
+      const body = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+
       if (!response.ok) {
-        throw new Error("Request failed");
+        throw new Error(body.error ?? "Request failed");
       }
 
       setForm(initialState);
-      setMessage("Submission received. The review queue is mocked for MVP, but the payload is valid.");
+      setMessage(body.message ?? "Submission received. We will email you if we need more detail.");
     } catch {
-      setMessage("Submission failed. Check the API route or keep mock mode enabled.");
+      setMessage("Submission failed. Check your connection or try again shortly.");
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +119,7 @@ export function MerchantForm() {
       </label>
 
       <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-espresso-500">Claims, approvals, and billing are intentionally mocked for MVP demos.</p>
+        <p className="text-sm text-espresso-500">Submissions are stored securely and reviewed by our team.</p>
         <button
           type="submit"
           disabled={isSubmitting}

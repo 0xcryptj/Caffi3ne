@@ -22,3 +22,11 @@ coverage
 APIS.txt
 supabase/.temp
 supabase/*.bak
+
+# OpenNext / Cloudflare local
+.open-next
+.wrangler/
+.dev.vars
+
+# TypeScript
+*.tsbuildinfo

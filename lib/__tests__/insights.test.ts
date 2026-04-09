@@ -3,19 +3,10 @@ import type { Shop } from "@/lib/types";
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 vi.mock("@/lib/services/weather", () => ({
-  getWeatherSignal: vi.fn().mockResolvedValue({ score: 60, raw: {} })
+  getWeatherSignal: vi.fn().mockResolvedValue({ score: 60, source: "tomorrow", raw: {} })
 }));
 vi.mock("@/lib/services/traffic", () => ({
-  getTrafficSignal: vi.fn().mockResolvedValue({ score: 60, raw: {} })
-}));
-vi.mock("@/lib/data/mock-shops", () => ({
-  getMockInsightForShop: vi.fn().mockReturnValue({
-    score: 55,
-    label: "Average",
-    breakdown: {},
-    explanation: [],
-    updatedAt: ""
-  })
+  getTrafficSignal: vi.fn().mockResolvedValue({ score: 60, source: "tomtom", raw: {} })
 }));
 
 // Ensure real API path is used (not mock mode)

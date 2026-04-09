@@ -4,13 +4,39 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { AuthNav } from "@/components/auth-nav";
 
-const links = [
-  { href: "/nearby", label: "Nearby Shops" },
-  { href: "/docs", label: "API Docs" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/merchant", label: "Merchants" }
+type NavEntry =
+  | { type: "link"; href: string; label: string }
+  | { type: "soon"; label: string };
+
+const navEntries: NavEntry[] = [
+  { type: "link", href: "/nearby", label: "Nearby Shops" },
+  { type: "soon", label: "API Docs" },
+  { type: "soon", label: "Pricing" },
+  { type: "soon", label: "Merchants" }
 ];
+
+function NavLabel({ entry }: { entry: NavEntry }) {
+  if (entry.type === "soon") {
+    return (
+      <span
+        className="cursor-not-allowed text-espresso-300"
+        title="Coming soon"
+      >
+        {entry.label}
+        <span className="ml-1.5 rounded-md bg-espresso-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-espresso-500">
+          Soon
+        </span>
+      </span>
+    );
+  }
+  return (
+    <Link href={entry.href as never} className="transition hover:text-espresso-900">
+      {entry.label}
+    </Link>
+  );
+}
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -38,42 +64,48 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 text-sm text-espresso-700 md:flex">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href as never}
-              className="transition hover:text-espresso-900"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <nav className="hidden items-center gap-6 text-sm text-espresso-700 md:flex">
+            {navEntries.map((entry) => (
+              <div key={entry.label}>
+                <NavLabel entry={entry} />
+              </div>
+            ))}
+          </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          className="flex items-center justify-center rounded-xl p-2 text-espresso-700 transition hover:bg-espresso-50 md:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label={open ? "Close menu" : "Open menu"}
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+          <AuthNav />
+
+          <button
+            type="button"
+            className="flex items-center justify-center rounded-xl p-2 text-espresso-700 transition hover:bg-espresso-50 md:hidden"
+            onClick={() => setOpen((v) => !v)}
+            aria-label={open ? "Close menu" : "Open menu"}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile dropdown */}
       {open && (
-        <div className="border-t border-espresso-100 bg-canvas/95 px-4 pb-4 pt-2 md:hidden animate-fade-in">
+        <div className="animate-fade-in border-t border-espresso-100 bg-canvas/95 px-4 pb-4 pt-2 md:hidden">
           <nav className="flex flex-col gap-0.5">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href as never}
-                className="rounded-xl px-3 py-3 text-sm font-medium text-espresso-700 transition hover:bg-espresso-50 hover:text-espresso-900"
-                onClick={() => setOpen(false)}
-              >
-                {link.label}
-              </Link>
+            {navEntries.map((entry) => (
+              <div key={entry.label}>
+                {entry.type === "link" ? (
+                  <Link
+                    href={entry.href as never}
+                    className="block rounded-xl px-3 py-3 text-sm font-medium text-espresso-700 transition hover:bg-espresso-50 hover:text-espresso-900"
+                    onClick={() => setOpen(false)}
+                  >
+                    {entry.label}
+                  </Link>
+                ) : (
+                  <span className="block rounded-xl px-3 py-3 text-sm text-espresso-400">
+                    {entry.label}{" "}
+                    <span className="text-[10px] font-bold uppercase text-espresso-400">Soon</span>
+                  </span>
+                )}
+              </div>
             ))}
           </nav>
         </div>

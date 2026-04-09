@@ -1,4 +1,3 @@
-import { getMockShopById, getMockShops } from "@/lib/data/mock-shops";
 import { externalServicesConfig, hasGoogleApiKey } from "@/lib/services/config";
 import type { NearbySearchParams, OrderingInfo, PriceLevel, Shop } from "@/lib/types";
 
@@ -116,21 +115,6 @@ function normalizePlacesNewResult(place: PlacesNewPlace, origin?: NearbySearchPa
         } satisfies OrderingInfo)
       : undefined,
   };
-}
-
-class MockPlacesProvider implements PlacesProvider {
-  async getNearbyCoffeeShops(params: NearbySearchParams): Promise<Shop[]> {
-    return getMockShops().map((shop) => ({
-      ...shop,
-      distanceMiles: milesFromCoordinates(params.lat, params.lng, shop.lat, shop.lng),
-      source: "mock"
-    }));
-  }
-
-  async getCoffeeShopById(id: string): Promise<Shop | undefined> {
-    const shop = getMockShopById(id);
-    return shop ? { ...shop, source: "mock" } : undefined;
-  }
 }
 
 class GooglePlacesProvider implements PlacesProvider {
@@ -303,8 +287,15 @@ class GooglePlacesProvider implements PlacesProvider {
 }
 
 function getPlacesProvider(): PlacesProvider {
-  if (externalServicesConfig.useMockData || !hasGoogleApiKey()) {
-    return new MockPlacesProvider();
+  if (!hasGoogleApiKey()) {
+    return {
+      async getNearbyCoffeeShops() {
+        return [];
+      },
+      async getCoffeeShopById() {
+        return undefined;
+      }
+    };
   }
   return new GooglePlacesProvider();
 }

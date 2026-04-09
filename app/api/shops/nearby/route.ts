@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       lat,
       lng,
       radius,
-      mockMode: appConfig.useMockData
+      liveData: !appConfig.useMockData
     }
   });
 }

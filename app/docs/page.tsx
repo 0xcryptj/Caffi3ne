@@ -98,7 +98,7 @@ const nearbyResponseExample = `{
       }
     }
   ],
-  "meta": { "lat": 32.7765, "lng": -79.9311, "radius": 8000, "mockMode": false }
+  "meta": { "lat": 32.7765, "lng": -79.9311, "radius": 8000, "liveData": true }
 }`;
 
 const insightSchemaExample = `{
@@ -139,10 +139,10 @@ const navItems = [
 export default function DocsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div className="flex gap-10 py-8 lg:py-12">
+      <div className="relative flex gap-10 py-8 lg:py-12">
 
         {/* ── Sticky sidebar ─────────────────────────────────────────── */}
-        <aside className="hidden w-48 shrink-0 lg:block">
+        <aside className="pointer-events-none hidden w-48 shrink-0 select-none opacity-40 grayscale lg:block">
           <div className="sticky top-24">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.25em] text-espresso-400">Docs</p>
             <nav className="space-y-0.5">
@@ -168,7 +168,7 @@ export default function DocsPage() {
         </aside>
 
         {/* ── Main content ────────────────────────────────────────────── */}
-        <main className="min-w-0 flex-1 space-y-16">
+        <main className="pointer-events-none min-w-0 flex-1 select-none space-y-16 opacity-40 grayscale">
 
           {/* Overview */}
           <section id="overview" className="scroll-mt-24">
@@ -184,9 +184,9 @@ export default function DocsPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               <InfoPill label="Base URL" value="https://your-domain.com" />
               <InfoPill label="Version"  value="v1 (stable)" />
-              <div className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Live · Charleston, SC
+              <div className="flex items-center gap-1.5 rounded-xl border border-espresso-200 bg-espresso-50 px-4 py-2 text-sm font-medium text-espresso-500">
+                <span className="h-2 w-2 rounded-full bg-espresso-300" />
+                API · Coming soon
               </div>
             </div>
           </section>
@@ -333,6 +333,16 @@ export default function DocsPage() {
           </section>
 
         </main>
+
+        <div className="pointer-events-auto absolute inset-0 z-30 flex items-start justify-center bg-canvas/50 px-4 pt-20 backdrop-blur-sm sm:pt-28">
+          <div className="max-w-md rounded-2xl border border-espresso-200 bg-white p-8 text-center shadow-panel">
+            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-espresso-400">Developer API</p>
+            <h2 className="mt-3 font-display text-2xl text-espresso-900 sm:text-3xl">Coming soon</h2>
+            <p className="mt-3 text-sm leading-7 text-espresso-600">
+              Public API access, keys, and interactive docs are not available yet. The Caffi3ne app and nearby discovery use live data today.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

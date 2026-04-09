@@ -30,7 +30,7 @@ const features = [
   },
   {
     title: "Developer API",
-    description: "Expose normalized shop and insight data with documentation, example payloads, and pricing.",
+    description: "Programmatic access to shop and intelligence data — launching soon. The consumer app already runs on the same live pipelines.",
     icon: Database,
     delay: 300,
   },
@@ -134,12 +134,12 @@ export default function LandingPage() {
                 Explore nearby shops
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                href="/docs"
-                className="inline-flex items-center gap-2 rounded-full border border-espresso-200 bg-white/80 px-6 py-3 text-sm font-semibold text-espresso-800 backdrop-blur-sm transition hover:bg-crema"
+              <span
+                className="inline-flex cursor-not-allowed items-center gap-2 rounded-full border border-dashed border-espresso-200 bg-espresso-50/80 px-6 py-3 text-sm font-semibold text-espresso-400 backdrop-blur-sm"
+                title="Developer API — coming soon"
               >
-                View API docs
-              </Link>
+                API docs — soon
+              </span>
             </div>
           </div>
         </div>
@@ -150,10 +150,10 @@ export default function LandingPage() {
         <section className="border-y border-espresso-100 bg-white">
           <div className="mx-auto grid max-w-7xl grid-cols-2 gap-0 px-4 sm:px-6 md:grid-cols-4 lg:px-8">
             {[
-              { label: "Live signals",  value: "4",   sub: "per shop, per request" },
-              { label: "API endpoints", value: "6",   sub: "ready on day one" },
+              { label: "Live signals",  value: "4+",  sub: "weather, traffic, time, foot traffic" },
+              { label: "Data sources",  value: "4",   sub: "Google, Tomorrow.io, TomTom, BestTime" },
               { label: "Crowd labels",  value: "4",   sub: "Below · Avg · Busy · Packed" },
-              { label: "Deploy time",   value: "<1s", sub: "Vercel edge network" },
+              { label: "Updates",       value: "Live", sub: "real provider data per request" },
             ].map((stat, i) => (
               <ScrollFade key={stat.label} delay={i * 80}>
                 <div className="border-r border-espresso-100 px-6 py-8 last:border-r-0 odd:border-b md:odd:border-b-0">
@@ -172,8 +172,8 @@ export default function LandingPage() {
         <ScrollFade>
           <SectionHeading
             eyebrow="Product"
-            title="An MVP that can pitch, demo, and evolve"
-            description="Shaped for three audiences at once: nearby coffee seekers, shop operators, and developers who want crowd intelligence as an API."
+            title="Built for coffee seekers, owners, and builders"
+            description="Caffi3ne combines live maps, ratings, hours, and crowd intelligence so you always know what to expect before you go."
           />
         </ScrollFade>
 
@@ -204,7 +204,7 @@ export default function LandingPage() {
           >
             <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Merchant layer</p>
             <h3 className="mt-3 font-display text-xl text-espresso-900 sm:text-2xl lg:text-3xl">Claim listings and submit missing shops</h3>
-            <p className="mt-4 text-espresso-600">Capture merchant demand early, even before full operational integrations exist.</p>
+            <p className="mt-4 text-espresso-600">Submit new locations or claim a listing. Our team reviews every submission.</p>
             <Link href="/merchant" className="mt-6 inline-flex text-sm font-semibold text-espresso-800 underline-offset-4 hover:underline">
               Open merchant portal
             </Link>
@@ -216,12 +216,12 @@ export default function LandingPage() {
             className="h-full rounded-[2rem] border border-espresso-100 bg-[#efe2cf] p-5 shadow-panel transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(38,25,14,0.14)] sm:p-8"
             spotlightColor="rgba(143,86,45,0.18)"
           >
-            <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">Pricing preview</p>
-            <h3 className="mt-3 font-display text-xl text-espresso-900 sm:text-2xl lg:text-3xl">Free for demo usage, Pro for heavier API access</h3>
-            <p className="mt-4 text-espresso-700">Usage-based framing is included now, while billing remains intentionally mocked for the MVP.</p>
-            <Link href="/pricing" className="mt-6 inline-flex text-sm font-semibold text-espresso-800 underline-offset-4 hover:underline">
-              See pricing
-            </Link>
+            <p className="text-xs uppercase tracking-[0.3em] text-espresso-500">For teams</p>
+            <h3 className="mt-3 font-display text-xl text-espresso-900 sm:text-2xl lg:text-3xl">API access and volume pricing</h3>
+            <p className="mt-4 text-espresso-700">Developer plans and public API keys are coming soon. The consumer experience is live today with real data.</p>
+            <span className="mt-6 inline-flex cursor-not-allowed text-sm font-semibold text-espresso-400" title="Coming soon">
+              Pricing — soon
+            </span>
           </SpotlightCard>
         </ScrollFade>
       </section>
