@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Coffee, LayoutList, LocateFixed, Map, MapPin, Search } from "lucide-react";
 import { MapPanel } from "@/components/map-panel";
 import { ShopCard } from "@/components/shop-card";
+import { getThumbCenterPercent, RANGE_THUMB_WIDTH_PX } from "@/lib/slider-geometry";
 import type { ShopWithInsight } from "@/lib/types";
 
 interface WeatherData {
@@ -26,6 +27,12 @@ interface NearbyDashboardProps {
 
 type LocationMode = "gps" | "zip";
 
+const RADIUS_MIN = 0;
+const RADIUS_MAX = 25;
+/** Matches tick marks; slider snaps to these values only. */
+const RADIUS_STEP = 5;
+const RADIUS_TICKS = [0, 5, 10, 15, 20, 25] as const;
+
 export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const [shops, setShops] = useState(initialShops);
   const [status, setStatus] = useState("Detecting your location…");
@@ -45,6 +52,8 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
   const locationReadyRef = useRef(false);
   // Tracks whether precise GPS has already won — prevents IP fallback from overwriting it
   const gpsResolvedRef = useRef(false);
+  const sliderTrackRef = useRef<HTMLDivElement>(null);
+  const [sliderTrackWidthPx, setSliderTrackWidthPx] = useState(0);
 
   const doFetch = useCallback(async (lat: number, lng: number, miles: number) => {
     if (miles === 0) { setShops([]); return; }
@@ -137,6 +146,17 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     }
   }, [applyLocation, locationMode]);
 
+  useEffect(() => {
+    const el = sliderTrackRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      setSliderTrackWidthPx(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Re-request GPS — called when user explicitly taps the GPS button.
   // Useful if they denied on first load and want to retry, or to refresh location.
   const requestGPS = useCallback(() => {
@@ -177,18 +197,28 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
     }
   };
 
-  const handleRadiusChange = (miles: number) => {
-    setRadius(miles);
-    radiusRef.current = miles;
-    if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
-    if (miles === 0) { setShops([]); return; }
-    if (!locationReadyRef.current) return;
-    fetchTimerRef.current = setTimeout(() => {
-      const coords = coordsRef.current;
-      if (!coords) return;
-      doFetch(coords.lat, coords.lng, miles);
-    }, 350);
-  };
+  /** Single source of truth: slider value === React state === API miles (0,5,…,25). */
+  const applyRadius = useCallback(
+    (raw: number) => {
+      if (!Number.isFinite(raw)) return;
+      const snapped = Math.round(raw / RADIUS_STEP) * RADIUS_STEP;
+      const next = Math.min(RADIUS_MAX, Math.max(RADIUS_MIN, snapped));
+      setRadius(next);
+      radiusRef.current = next;
+      if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
+      if (next === 0) {
+        setShops([]);
+        return;
+      }
+      if (!locationReadyRef.current) return;
+      fetchTimerRef.current = setTimeout(() => {
+        const coords = coordsRef.current;
+        if (!coords) return;
+        doFetch(coords.lat, coords.lng, next);
+      }, 350);
+    },
+    [doFetch]
+  );
 
   const switchMode = (mode: LocationMode) => {
     setLocationMode(mode);
@@ -202,10 +232,13 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
 
   const radiusLabel = radius === 0 ? "Off" : `${radius} mi`;
 
-  const sliderPct = (radius / 25) * 100;
+  const thumbCenterPct = (v: number) =>
+    getThumbCenterPercent(v, RADIUS_MIN, RADIUS_MAX, sliderTrackWidthPx, RANGE_THUMB_WIDTH_PX);
+
+  const fillEndPct = radius <= 0 ? 0 : thumbCenterPct(radius);
 
   return (
-    <div className="space-y-5">
+    <div className="w-full min-w-0 space-y-5">
 
       {/* ── Header card ────────────────────────────────────────────────── */}
       <div className="animate-fade-in rounded-[2rem] border border-espresso-100 bg-white p-4 shadow-panel sm:p-6">
@@ -291,35 +324,56 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
           </div>
         )}
 
-        {/* ── Radius slider ─────────────────────────────────────────────── */}
+        {/* ── Radius slider (native range = source of truth; fill + ticks share same 0–100% scale) ─ */}
         <div className="mt-4 w-full min-w-0 rounded-2xl bg-espresso-50 px-3 py-3.5 sm:px-4 sm:py-4">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-espresso-700 sm:text-sm">Search radius</span>
             <span className="rounded-full bg-espresso-900 px-2.5 py-0.5 text-xs font-semibold text-crema tabular-nums">
               {radiusLabel}
             </span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={25}
-            step={1}
-            value={radius}
-            onChange={(e) => handleRadiusChange(Number(e.target.value))}
-            className="radius-slider"
-            style={{
-              background: `linear-gradient(to right, #452815 0%, #452815 ${sliderPct}%, #e8d5bf ${sliderPct}%, #e8d5bf 100%)`
-            }}
-          />
-          <div className="mt-2 grid grid-cols-6 gap-0.5 text-center text-[10px] font-medium tabular-nums text-espresso-500 sm:text-xs">
-            <span>0</span>
-            <span>5</span>
-            <span>10</span>
-            <span>15</span>
-            <span>20</span>
-            <span>25</span>
+          <div ref={sliderTrackRef} className="relative w-full min-w-0">
+            <div
+              className="pointer-events-none absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-[#e8d5bf]"
+              aria-hidden
+            />
+            <div
+              className={`pointer-events-none absolute left-0 top-1/2 h-2 max-w-full -translate-y-1/2 bg-[#452815] ${
+                radius >= RADIUS_MAX ? "rounded-full" : "rounded-l-full"
+              }`}
+              style={{
+                width: `${fillEndPct}%`,
+                opacity: radius <= 0 ? 0 : 1
+              }}
+              aria-hidden
+            />
+            <input
+              type="range"
+              min={RADIUS_MIN}
+              max={RADIUS_MAX}
+              step={RADIUS_STEP}
+              value={radius}
+              onChange={(e) => applyRadius(Number(e.target.value))}
+              className="radius-slider relative z-10"
+              aria-valuemin={RADIUS_MIN}
+              aria-valuemax={RADIUS_MAX}
+              aria-valuenow={radius}
+              aria-valuetext={radius === 0 ? "Off" : `${radius} miles`}
+              aria-label="Search radius in miles (steps of 5)"
+            />
           </div>
-          <p className="mt-0.5 text-center text-[9px] text-espresso-400 sm:text-[10px]">Miles from you</p>
+          <div className="relative mt-3 h-5 w-full min-w-0 text-[10px] font-medium tabular-nums text-espresso-500 sm:h-6 sm:text-xs">
+            {RADIUS_TICKS.map((t) => (
+              <span
+                key={t}
+                className="absolute top-0 -translate-x-1/2 whitespace-nowrap"
+                style={{ left: `${thumbCenterPct(t)}%` }}
+              >
+                {t === 0 ? "0" : `${t} mi`}
+              </span>
+            ))}
+          </div>
+          <p className="mt-1 text-center text-[9px] text-espresso-400 sm:text-[10px]">5-mile steps</p>
         </div>
       </div>
 
@@ -331,7 +385,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
           </div>
           <h2 className="font-display text-2xl text-espresso-900">Ready when you are</h2>
           <p className="mt-2 max-w-sm text-sm text-espresso-500">
-            Slide the radius above to explore coffee shops around your location.
+            Choose a search radius in 5-mile steps to explore coffee shops around you.
           </p>
         </div>
       )}
@@ -370,9 +424,11 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
             </button>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="grid w-full min-w-0 gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             {/* List — full width on mobile (hidden when map tab active), left col on desktop */}
-            <div className={mobileView === "map" ? "hidden lg:block" : "block"}>
+            <div
+              className={`w-full min-w-0 ${mobileView === "map" ? "hidden lg:block" : "block"}`}
+            >
               <div className="space-y-3 pb-20 lg:pb-0">
                 {loading && shops.length === 0 && (
                   <div className="space-y-3">

@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { AuthNav } from "@/components/auth-nav";
+import { useAuth } from "@/context/AuthProvider";
 
 type NavEntry =
   | { type: "link"; href: string; label: string }
@@ -40,53 +41,50 @@ function NavLabel({ entry }: { entry: NavEntry }) {
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 border-b border-espresso-100/70 bg-canvas/90 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-          <div className="flex min-w-0 items-center justify-between gap-2 md:justify-start md:gap-0">
-            <Link
-              href="/"
-              className="flex min-w-0 flex-1 items-center gap-2.5 text-espresso-800 md:flex-none"
-              onClick={() => setOpen(false)}
-            >
-              <Image
-                src="/logo.png"
-                alt="Caffi3ne"
-                width={44}
-                height={44}
-                className="shrink-0 rounded-full object-cover sm:h-[52px] sm:w-[52px]"
-              />
-              <div className="min-w-0">
-                <div className="font-display text-base tracking-wide sm:text-lg">Caffi3ne</div>
-                <div className="truncate text-[9px] uppercase tracking-[0.22em] text-espresso-400 sm:text-[10px] sm:tracking-[0.28em]">
-                  Coffee Intelligence
-                </div>
+        <div className="flex min-w-0 items-center justify-between gap-2 md:gap-4">
+          <Link
+            href="/"
+            className="flex min-w-0 max-w-[min(100%,12rem)] shrink items-center gap-2 text-espresso-800 sm:max-w-none sm:gap-2.5"
+            onClick={() => setOpen(false)}
+          >
+            <Image
+              src="/logo.png"
+              alt="Caffi3ne"
+              width={44}
+              height={44}
+              className="shrink-0 rounded-full object-cover sm:h-[52px] sm:w-[52px]"
+            />
+            <div className="min-w-0">
+              <div className="truncate font-display text-base tracking-wide sm:text-lg">Caffi3ne</div>
+              <div className="truncate text-[9px] uppercase tracking-[0.22em] text-espresso-400 sm:text-[10px] sm:tracking-[0.28em]">
+                Coffee Intelligence
               </div>
-            </Link>
+            </div>
+          </Link>
 
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-6 text-sm text-espresso-700 md:flex">
+            {navEntries.map((entry) => (
+              <div key={entry.label}>
+                <NavLabel entry={entry} />
+              </div>
+            ))}
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+            <AuthNav />
             <button
               type="button"
-              className="flex shrink-0 items-center justify-center rounded-xl p-2 text-espresso-700 transition hover:bg-espresso-50 md:hidden"
+              className="flex items-center justify-center rounded-xl p-2 text-espresso-700 transition hover:bg-espresso-50 md:hidden"
               onClick={() => setOpen((v) => !v)}
               aria-label={open ? "Close menu" : "Open menu"}
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-          </div>
-
-          <div className="flex min-w-0 flex-col items-stretch gap-3 border-t border-espresso-100/60 pt-3 md:flex-row md:items-center md:gap-6 md:border-t-0 md:pt-0">
-            <nav className="hidden items-center gap-6 text-sm text-espresso-700 md:flex">
-              {navEntries.map((entry) => (
-                <div key={entry.label}>
-                  <NavLabel entry={entry} />
-                </div>
-              ))}
-            </nav>
-            <div className="flex w-full min-w-0 justify-end md:w-auto">
-              <AuthNav />
-            </div>
           </div>
         </div>
       </div>
@@ -112,6 +110,19 @@ export function SiteHeader() {
                 )}
               </div>
             ))}
+            {!loading && user && (
+              <button
+                type="button"
+                className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-medium text-espresso-700 transition hover:bg-espresso-50 hover:text-espresso-900"
+                onClick={() => {
+                  setOpen(false);
+                  void signOut();
+                }}
+              >
+                <LogOut className="h-4 w-4 shrink-0 opacity-70" strokeWidth={2} />
+                Sign out
+              </button>
+            )}
           </nav>
         </div>
       )}

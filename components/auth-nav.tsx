@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { LogOut } from "lucide-react";
+import { accountPrimaryLabel, accountShortLabel } from "@/lib/account-display";
 import { useAuth } from "@/context/AuthProvider";
 
 export function AuthNav() {
@@ -10,7 +12,7 @@ export function AuthNav() {
   if (loading) {
     return (
       <div
-        className="h-5 w-5 animate-spin rounded-full border-2 border-espresso-200 border-t-espresso-600"
+        className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-espresso-200 border-t-espresso-600 md:h-5 md:w-5"
         aria-hidden
       />
     );
@@ -20,7 +22,7 @@ export function AuthNav() {
     return (
       <Link
         href="/login"
-        className="rounded-full border border-espresso-200 bg-white px-4 py-2 text-sm font-semibold text-espresso-800 transition hover:border-espresso-300"
+        className="shrink-0 rounded-full border border-espresso-200 bg-white px-3 py-1.5 text-xs font-semibold text-espresso-800 transition hover:border-espresso-300 md:px-4 md:py-2 md:text-sm"
       >
         Sign in
       </Link>
@@ -28,35 +30,43 @@ export function AuthNav() {
   }
 
   const avatarUrl = user.user_metadata?.avatar_url as string | undefined;
-  const label = user.email ?? "Account";
+  const fullLabel = accountPrimaryLabel(user);
+  const shortLabel = accountShortLabel(user);
 
   return (
-    <div className="flex max-w-full flex-wrap items-center justify-end gap-2 sm:gap-3">
+    <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
       <Link
         href="/dashboard"
-        className="flex min-w-0 max-w-full items-center gap-2 rounded-full border border-espresso-100 bg-white/90 py-1 pl-1 pr-2.5 text-sm text-espresso-800 transition hover:border-espresso-200 sm:pr-3"
+        title={fullLabel}
+        aria-label={`Open dashboard (${fullLabel})`}
+        className="inline-flex h-9 max-w-[10rem] min-w-0 items-center gap-1.5 rounded-full border border-espresso-200/90 bg-white py-0.5 pl-0.5 pr-2.5 text-espresso-800 shadow-sm transition hover:border-espresso-300 md:h-10 md:max-w-[min(100%,18rem)] md:gap-2 md:pl-1 md:pr-3"
       >
         {avatarUrl ? (
           <Image
             src={avatarUrl}
             alt=""
-            width={28}
-            height={28}
-            className="h-7 w-7 shrink-0 rounded-full object-cover"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 rounded-full object-cover"
             unoptimized
           />
         ) : (
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-espresso-100 text-xs font-semibold text-espresso-700">
-            {label.slice(0, 1).toUpperCase()}
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-espresso-100 text-[11px] font-semibold leading-none text-espresso-700">
+            {fullLabel.slice(0, 1).toUpperCase()}
           </span>
         )}
-        <span className="min-w-0 max-w-[10rem] truncate sm:max-w-[11rem]">{label}</span>
+        <span className="min-w-0 truncate text-xs font-medium leading-none md:hidden">{shortLabel}</span>
+        <span className="hidden min-w-0 truncate text-sm font-medium leading-none md:inline">
+          {fullLabel}
+        </span>
       </Link>
       <button
         type="button"
         onClick={() => void signOut()}
-        className="shrink-0 whitespace-nowrap text-xs font-medium text-espresso-600 underline-offset-2 hover:text-espresso-900 hover:underline sm:text-sm"
+        className="hidden shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium text-espresso-600 underline-offset-2 transition hover:bg-espresso-50 hover:text-espresso-900 hover:underline md:inline-flex"
+        aria-label="Sign out"
       >
+        <LogOut className="h-4 w-4 opacity-70" strokeWidth={2} />
         Sign out
       </button>
     </div>
