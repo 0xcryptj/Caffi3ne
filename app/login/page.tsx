@@ -7,7 +7,7 @@ export default async function LoginPage(props: { searchParams: SearchParams }) {
   const nextPath = params.next?.startsWith("/") ? params.next : "/dashboard";
   const initialError =
     params.error === "callback"
-      ? "Sign-in could not be completed. Try again or use a different method."
+      ? "Could not finish sign-in. For Google, add https://your-domain/auth/callback to Supabase → Authentication → Redirect URLs (and use only Supabase’s callback URL in Google Cloud OAuth). You can still use the magic link."
       : null;
 
   return (

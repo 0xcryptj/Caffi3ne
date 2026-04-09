@@ -311,14 +311,15 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
               background: `linear-gradient(to right, #452815 0%, #452815 ${sliderPct}%, #e8d5bf ${sliderPct}%, #e8d5bf 100%)`
             }}
           />
-          <div className="mt-1.5 flex justify-between text-[9px] text-espresso-400 sm:text-[10px]">
+          <div className="mt-2 grid grid-cols-6 gap-0.5 text-center text-[10px] font-medium tabular-nums text-espresso-500 sm:text-xs">
             <span>0</span>
-            <span>5 mi</span>
-            <span>10 mi</span>
-            <span>15 mi</span>
-            <span>20 mi</span>
-            <span>25 mi</span>
+            <span>5</span>
+            <span>10</span>
+            <span>15</span>
+            <span>20</span>
+            <span>25</span>
           </div>
+          <p className="mt-0.5 text-center text-[9px] text-espresso-400 sm:text-[10px]">Miles from you</p>
         </div>
       </div>
 
@@ -372,7 +373,7 @@ export function NearbyDashboard({ initialShops }: NearbyDashboardProps) {
           <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             {/* List — full width on mobile (hidden when map tab active), left col on desktop */}
             <div className={mobileView === "map" ? "hidden lg:block" : "block"}>
-              <div className="space-y-3">
+              <div className="space-y-3 pb-20 lg:pb-0">
                 {loading && shops.length === 0 && (
                   <div className="space-y-3">
                     {[0, 1, 2, 3].map((i) => (

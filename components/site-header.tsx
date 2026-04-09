@@ -43,46 +43,51 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-espresso-100/70 bg-canvas/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
-        <Link
-          href="/"
-          className="flex min-w-0 items-center gap-2.5 text-espresso-800"
-          onClick={() => setOpen(false)}
-        >
-          <Image
-            src="/logo.png"
-            alt="Caffi3ne"
-            width={44}
-            height={44}
-            className="shrink-0 rounded-full object-cover sm:h-[52px] sm:w-[52px]"
-          />
-          <div className="min-w-0">
-            <div className="font-display text-base tracking-wide sm:text-lg">Caffi3ne</div>
-            <div className="truncate text-[9px] uppercase tracking-[0.22em] text-espresso-400 sm:text-[10px] sm:tracking-[0.28em]">
-              Coffee Intelligence
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+          <div className="flex min-w-0 items-center justify-between gap-2 md:justify-start md:gap-0">
+            <Link
+              href="/"
+              className="flex min-w-0 flex-1 items-center gap-2.5 text-espresso-800 md:flex-none"
+              onClick={() => setOpen(false)}
+            >
+              <Image
+                src="/logo.png"
+                alt="Caffi3ne"
+                width={44}
+                height={44}
+                className="shrink-0 rounded-full object-cover sm:h-[52px] sm:w-[52px]"
+              />
+              <div className="min-w-0">
+                <div className="font-display text-base tracking-wide sm:text-lg">Caffi3ne</div>
+                <div className="truncate text-[9px] uppercase tracking-[0.22em] text-espresso-400 sm:text-[10px] sm:tracking-[0.28em]">
+                  Coffee Intelligence
+                </div>
+              </div>
+            </Link>
+
+            <button
+              type="button"
+              className="flex shrink-0 items-center justify-center rounded-xl p-2 text-espresso-700 transition hover:bg-espresso-50 md:hidden"
+              onClick={() => setOpen((v) => !v)}
+              aria-label={open ? "Close menu" : "Open menu"}
+            >
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+
+          <div className="flex min-w-0 flex-col items-stretch gap-3 border-t border-espresso-100/60 pt-3 md:flex-row md:items-center md:gap-6 md:border-t-0 md:pt-0">
+            <nav className="hidden items-center gap-6 text-sm text-espresso-700 md:flex">
+              {navEntries.map((entry) => (
+                <div key={entry.label}>
+                  <NavLabel entry={entry} />
+                </div>
+              ))}
+            </nav>
+            <div className="flex w-full min-w-0 justify-end md:w-auto">
+              <AuthNav />
             </div>
           </div>
-        </Link>
-
-        <div className="flex items-center gap-2 sm:gap-4">
-          <nav className="hidden items-center gap-6 text-sm text-espresso-700 md:flex">
-            {navEntries.map((entry) => (
-              <div key={entry.label}>
-                <NavLabel entry={entry} />
-              </div>
-            ))}
-          </nav>
-
-          <AuthNav />
-
-          <button
-            type="button"
-            className="flex items-center justify-center rounded-xl p-2 text-espresso-700 transition hover:bg-espresso-50 md:hidden"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
       </div>
 

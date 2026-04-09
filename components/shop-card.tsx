@@ -61,8 +61,8 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
 
         <p className="mt-0.5 truncate text-xs text-espresso-400">{shop.address}</p>
 
-        {/* Status row */}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {/* Status row — wrap on narrow screens; avoid ml-auto overflow */}
+        <div className="mt-2 flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
           {shop.isOpenNow === false && (
             <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-xs font-bold tracking-wide text-red-600">
               CLOSED
@@ -73,35 +73,37 @@ export function ShopCard({ shop, index = 0 }: ShopCardProps) {
             {shop.insight.label}
           </span>
 
-          <span className="text-xs tabular-nums text-espresso-700">
+          <span className="shrink-0 text-xs tabular-nums text-espresso-700">
             <span className="font-semibold">{formatScore(shop.insight.score)}</span>
             <span className="text-espresso-400">/100</span>
           </span>
 
           {shop.rating > 0 && (
-            <span className="text-xs text-espresso-600">
+            <span className="min-w-0 max-w-full text-xs text-espresso-600">
               {shop.rating}
               <span className="ml-1 text-espresso-400">· {shop.userRatingsTotal.toLocaleString()}</span>
             </span>
           )}
 
           {shop.insight.waitMinutes && (
-            <span className="ml-auto flex shrink-0 items-center gap-1 text-xs tabular-nums text-espresso-500">
+            <span className="flex shrink-0 items-center gap-1 text-xs tabular-nums text-espresso-500 sm:ml-auto">
               <Clock className="h-3 w-3 shrink-0" />
               {shop.insight.waitMinutes.label}
             </span>
           )}
 
           {!shop.insight.waitMinutes && hours && (
-            <span className="ml-auto hidden truncate text-xs text-espresso-400 sm:inline">{hours}</span>
+            <span className="w-full min-w-0 truncate text-xs text-espresso-400 sm:ml-auto sm:w-auto sm:max-w-[12rem]">
+              {hours}
+            </span>
           )}
         </div>
 
         {/* ── Foot traffic bar ─────────────────────────────────────────── */}
         {shop.isOpenNow !== false && (
-          <div className="mt-2.5 flex items-center gap-2">
+          <div className="mt-2.5 flex min-w-0 items-center gap-2">
             <Activity className="h-3 w-3 shrink-0 text-espresso-400" />
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-espresso-100">
+            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-espresso-100">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${trafficColor(score)}`}
                 style={{ width: `${score}%` }}

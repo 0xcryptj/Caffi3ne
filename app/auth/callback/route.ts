@@ -1,22 +1,46 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { getRequestOrigin } from "@/lib/get-request-origin";
+import { getSupabasePublishableKey, getSupabaseUrl } from "@/utils/supabase/env";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get("code");
-  const nextRaw = searchParams.get("next");
+export const dynamic = "force-dynamic";
+
+/**
+ * OAuth (Google) and magic-link return URL. Session cookies must be set on the same
+ * NextResponse as the redirect — using cookies() alone can drop Set-Cookie on redirect.
+ */
+export async function GET(request: NextRequest) {
+  const url = request.nextUrl;
+  const code = url.searchParams.get("code");
+  const nextRaw = url.searchParams.get("next");
   const next = nextRaw?.startsWith("/") ? nextRaw : "/dashboard";
+  const origin = getRequestOrigin(request);
 
-  if (code) {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
-
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
+  if (!code) {
+    return NextResponse.redirect(`${origin}/login?error=callback`);
   }
 
-  return NextResponse.redirect(`${origin}/login?error=callback`);
+  const redirectTarget = `${origin}${next}`;
+  const redirectResponse = NextResponse.redirect(redirectTarget);
+
+  const supabase = createServerClient(getSupabaseUrl(), getSupabasePublishableKey(), {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          redirectResponse.cookies.set(name, value, options);
+        });
+      }
+    }
+  });
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  if (error) {
+    console.error("auth callback exchangeCodeForSession:", error.message);
+    return NextResponse.redirect(`${origin}/login?error=callback`);
+  }
+
+  return redirectResponse;
 }
