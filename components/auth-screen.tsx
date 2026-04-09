@@ -8,7 +8,7 @@ import { setAuthReturnPathClient } from "@/lib/auth-return-path";
 import { safeInternalPath } from "@/lib/auth-routes";
 import { fetchGoogleOAuthEnabled } from "@/lib/auth-provider-settings";
 import { formatAuthError } from "@/lib/format-auth-error";
-import { buildAuthCallbackUrl } from "@/lib/get-auth-callback-url";
+import { buildAuthCallbackUrl, buildPasswordRecoveryConfirmUrl } from "@/lib/get-auth-callback-url";
 import { startGoogleOAuth } from "@/lib/start-google-oauth";
 import { createClient } from "@/utils/supabase/client";
 import { GoogleGLogo } from "@/components/google-g-logo";
@@ -20,18 +20,27 @@ type Props = {
   nextPath: string;
   initialTab: Tab;
   initialError: string | null;
-  showRedirectHint?: boolean;
+  /** Success copy from URL (e.g. password updated). */
+  initialInfo?: string | null;
+  /** When set with an error, show the matching allowlist URL for Supabase. */
+  redirectHint?: "callback" | "recovery" | null;
 };
 
 function FieldIcon({ children }: { children: React.ReactNode }) {
   return (
-    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 [&_svg]:h-[18px] [&_svg]:w-[18px]">
+    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-espresso-400 [&_svg]:h-[18px] [&_svg]:w-[18px]">
       {children}
     </span>
   );
 }
 
-export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHint = false }: Props) {
+export function AuthScreen({
+  nextPath,
+  initialTab,
+  initialError,
+  initialInfo = null,
+  redirectHint = null
+}: Props) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -48,6 +57,8 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
   const [signupLoading, setSignupLoading] = useState(false);
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicSent, setMagicSent] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [resetEmailLoading, setResetEmailLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(initialError);
   const [info, setInfo] = useState<string | null>(null);
@@ -61,6 +72,10 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
   useEffect(() => {
     setError(initialError);
   }, [initialError]);
+
+  useEffect(() => {
+    if (initialInfo) setInfo(initialInfo);
+  }, [initialInfo]);
 
   useEffect(() => {
     setOrigin(typeof window !== "undefined" ? window.location.origin : null);
@@ -192,6 +207,32 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
     }
   };
 
+  const handleResetPasswordEmail = async () => {
+    setError(null);
+    setInfo(null);
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError("Enter your email.");
+      return;
+    }
+    setResetEmailLoading(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, {
+        redirectTo: buildPasswordRecoveryConfirmUrl()
+      });
+      if (resetError) {
+        setError(formatAuthError(resetError));
+        return;
+      }
+      setForgotOpen(false);
+      setInfo("If that email is registered, you'll get a link to reset your password. It may take a minute to arrive.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send reset email.");
+    } finally {
+      setResetEmailLoading(false);
+    }
+  };
+
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -221,26 +262,31 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
   };
 
   const busy =
-    googleLoading || passwordLoading || signupLoading || magicLoading || googleAvailable === null;
+    googleLoading ||
+    passwordLoading ||
+    signupLoading ||
+    magicLoading ||
+    resetEmailLoading ||
+    googleAvailable === null;
   const googleLabel = tab === "signin" ? "Sign in with Google" : "Sign up with Google";
 
   const inputBase =
-    "w-full rounded-lg border border-zinc-200 bg-white py-2.5 text-sm text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-1 focus:ring-zinc-900/10";
+    "w-full rounded-lg border border-espresso-200/80 bg-crema py-2.5 text-sm text-espresso-900 outline-none transition placeholder:text-espresso-400 focus:border-espresso-400 focus:ring-1 focus:ring-espresso-500/20";
   const inputEmail = `${inputBase} pl-10 pr-3`;
   const inputPassword = `${inputBase} pl-10 pr-10`;
 
   return (
     <div className="mx-auto w-full max-w-[420px]">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
-        <div className="mb-8 flex rounded-lg bg-zinc-100 p-1">
+      <div className="rounded-2xl border border-espresso-200/80 bg-crema p-6 shadow-sm sm:p-8">
+        <div className="mb-8 flex rounded-lg border border-espresso-200/60 bg-espresso-100/50 p-1">
           <button
             type="button"
             onClick={() => handleTab("signin")}
             className={cn(
               "flex-1 rounded-md py-2.5 text-sm font-semibold transition",
               tab === "signin"
-                ? "bg-white text-zinc-900 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
+                ? "bg-crema text-espresso-900 shadow-sm"
+                : "text-espresso-600 hover:text-espresso-800"
             )}
           >
             Sign In
@@ -251,8 +297,8 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
             className={cn(
               "flex-1 rounded-md py-2.5 text-sm font-semibold transition",
               tab === "signup"
-                ? "bg-white text-zinc-900 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700"
+                ? "bg-crema text-espresso-900 shadow-sm"
+                : "text-espresso-600 hover:text-espresso-800"
             )}
           >
             Sign Up
@@ -265,18 +311,20 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
             role="alert"
           >
             <p>{error}</p>
-            {showRedirectHint && origin && (
+            {redirectHint && origin && (
               <p className="border-t border-red-200/80 pt-2 text-xs leading-relaxed text-red-900/90">
                 In Supabase → Authentication → URL configuration → Redirect URLs, include:
-                <code className="mt-1 block break-all rounded bg-white/90 px-2 py-1.5 font-mono text-[11px] text-zinc-900">
-                  {origin}/auth/callback
+                <code className="mt-1 block break-all rounded bg-white/90 px-2 py-1.5 font-mono text-[11px] text-espresso-900">
+                  {redirectHint === "recovery"
+                    ? `${origin}/auth/confirm-recovery**`
+                    : `${origin}/auth/callback**`}
                 </code>
               </p>
             )}
           </div>
         )}
         {info && (
-          <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <div className="mb-4 rounded-lg border border-sage/40 bg-espresso-50 px-3 py-2 text-sm text-espresso-800">
             {info}
           </div>
         )}
@@ -289,10 +337,10 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
               void handleGoogle();
             }}
             disabled={busy}
-            className="mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mb-6 flex w-full items-center justify-center gap-3 rounded-lg border border-espresso-200/80 bg-crema px-4 py-3 text-sm font-semibold text-espresso-800 shadow-sm transition hover:bg-espresso-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {googleLoading ? (
-              <span className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-600" />
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-espresso-200 border-t-espresso-600" />
             ) : (
               <GoogleGLogo className="h-5 w-5 shrink-0" />
             )}
@@ -308,12 +356,12 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
         )}
 
         {googleAvailable !== false && (
-          <div className="relative mb-6">
+            <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center" aria-hidden>
-              <span className="w-full border-t border-zinc-200" />
+              <span className="w-full border-t border-espresso-200/70" />
             </div>
-            <div className="relative flex justify-center text-xs font-medium uppercase tracking-wider text-zinc-400">
-              <span className="bg-white px-3">or</span>
+            <div className="relative flex justify-center text-xs font-medium uppercase tracking-wider text-espresso-400">
+              <span className="bg-crema px-3">or</span>
             </div>
           </div>
         )}
@@ -321,7 +369,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
         {tab === "signin" ? (
           <form onSubmit={(e) => void handleSignIn(e)} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-zinc-900">Email</label>
+              <label className="mb-1.5 block text-sm font-semibold text-espresso-900">Email</label>
               <div className="relative">
                 <FieldIcon>
                   <Mail aria-hidden />
@@ -339,7 +387,19 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-zinc-900">Password</label>
+              <div className="mb-1.5 flex items-center justify-between gap-2">
+                <label className="block text-sm font-semibold text-espresso-900">Password</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotOpen((o) => !o);
+                    setError(null);
+                  }}
+                  className="text-xs font-semibold text-espresso-700 underline-offset-2 hover:underline"
+                >
+                  {forgotOpen ? "Hide" : "Forgot password?"}
+                </button>
+              </div>
               <div className="relative">
                 <FieldIcon>
                   <Lock aria-hidden />
@@ -358,17 +418,32 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPwIn((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-espresso-400 hover:bg-espresso-100 hover:text-espresso-700"
                   aria-label={showPwIn ? "Hide password" : "Show password"}
                 >
                   {showPwIn ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                 </button>
               </div>
+              {forgotOpen && (
+                <div className="mt-3 rounded-lg border border-espresso-200/70 bg-espresso-50/80 p-3">
+                  <p className="mb-2 text-xs leading-relaxed text-espresso-700">
+                    We&apos;ll email you a secure link. It opens a page where you can set a new password.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={busy || !email.trim()}
+                    onClick={() => void handleResetPasswordEmail()}
+                    className="w-full rounded-lg border border-espresso-300 bg-crema py-2 text-sm font-semibold text-espresso-800 transition hover:bg-espresso-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {resetEmailLoading ? "Sending…" : "Email me a reset link"}
+                  </button>
+                </div>
+              )}
             </div>
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-lg bg-neutral-950 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-lg bg-espresso-600 py-3 text-sm font-semibold text-crema shadow-sm transition hover:bg-espresso-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {passwordLoading ? "Signing in…" : "Sign In"}
             </button>
@@ -376,7 +451,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
         ) : (
           <form onSubmit={(e) => void handleSignUp(e)} className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-zinc-900">Email</label>
+              <label className="mb-1.5 block text-sm font-semibold text-espresso-900">Email</label>
               <div className="relative">
                 <FieldIcon>
                   <Mail aria-hidden />
@@ -395,7 +470,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-zinc-900">Password</label>
+              <label className="mb-1.5 block text-sm font-semibold text-espresso-900">Password</label>
               <div className="relative">
                 <FieldIcon>
                   <Lock aria-hidden />
@@ -416,7 +491,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPwUp((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-espresso-400 hover:bg-espresso-100 hover:text-espresso-700"
                   aria-label={showPwUp ? "Hide password" : "Show password"}
                 >
                   {showPwUp ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
@@ -424,7 +499,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-zinc-900">Confirm password</label>
+              <label className="mb-1.5 block text-sm font-semibold text-espresso-900">Confirm password</label>
               <div className="relative">
                 <FieldIcon>
                   <Lock aria-hidden />
@@ -445,7 +520,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPwConfirm((s) => !s)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-espresso-400 hover:bg-espresso-100 hover:text-espresso-700"
                   aria-label={showPwConfirm ? "Hide password" : "Show password"}
                 >
                   {showPwConfirm ? (
@@ -459,7 +534,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-lg bg-neutral-950 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-lg bg-espresso-600 py-3 text-sm font-semibold text-crema shadow-sm transition hover:bg-espresso-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {signupLoading ? "Creating account…" : "Create Account"}
             </button>
@@ -467,19 +542,19 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
         )}
 
         {tab === "signin" && (
-          <div className="mt-5 border-t border-zinc-100 pt-4">
-            <p className="mb-2 text-center text-xs text-zinc-500">Passwordless sign-in</p>
+          <div className="mt-5 border-t border-espresso-200/60 pt-4">
+            <p className="mb-2 text-center text-xs text-espresso-600">Passwordless sign-in</p>
             <form onSubmit={(e) => void handleMagicLink(e)}>
               <button
                 type="submit"
                 disabled={busy || !email.trim()}
-                className="w-full rounded-lg border border-zinc-200 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-lg border border-espresso-300/80 py-2.5 text-sm font-medium text-espresso-800 transition hover:bg-espresso-100/60 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {magicLoading ? "Sending…" : "Email me a login link"}
               </button>
             </form>
             {magicSent && (
-              <p className="mt-2 text-center text-xs text-emerald-700">Check your email for the link.</p>
+              <p className="mt-2 text-center text-xs text-espresso-700">Check your email for the link.</p>
             )}
           </div>
         )}
@@ -488,7 +563,7 @@ export function AuthScreen({ nextPath, initialTab, initialError, showRedirectHin
       <p className="mt-8 text-center">
         <Link
           href="/"
-          className="text-sm font-semibold text-zinc-900 underline-offset-4 hover:underline"
+          className="text-sm font-semibold text-espresso-800 underline-offset-4 hover:underline"
         >
           Back to Home
         </Link>

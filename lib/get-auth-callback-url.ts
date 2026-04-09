@@ -14,14 +14,23 @@ function looksLikeLocalOrigin(origin: string): boolean {
   }
 }
 
+function vercelDeploymentOrigin(): string | null {
+  const raw = process.env.VERCEL_URL?.trim();
+  if (!raw) return null;
+  const host = raw.replace(/^https?:\/\//i, "").split("/")[0]?.trim();
+  if (!host) return null;
+  const origin = `https://${host}`;
+  return looksLikeLocalOrigin(origin) ? null : origin;
+}
+
 /**
- * Canonical origin for OAuth, magic links, and signup confirmation emails.
+ * Canonical origin for OAuth, magic links, signup confirmation, and password-reset emails.
  *
- * - **Production:** Prefer `NEXT_PUBLIC_APP_URL` so confirmation links always use your real domain
- *   (e.g. https://caffi3ne.cc), not localhost — set this on Vercel to your public URL.
- * - **Local dev:** Uses the current tab origin so `.env.local` can still point at localhost.
- * - **Misconfigured env:** If env is localhost but the user is on a public host, the tab wins so
- *   emails are not forced to localhost.
+ * - **Browser on a public host:** Uses the tab origin when `NEXT_PUBLIC_APP_URL` is missing or still
+ *   localhost (avoids production OAuth pointing at localhost).
+ * - **Browser + public env:** Uses `NEXT_PUBLIC_APP_URL` for a stable apex vs www choice.
+ * - **Local dev tab:** Always the tab origin.
+ * - **Server (no window):** Public env, then `VERCEL_URL`, then `appConfig.appUrl`.
  */
 export function getAuthRedirectOrigin(): string {
   const envCanonical = trimOrigin(process.env.NEXT_PUBLIC_APP_URL);
@@ -42,7 +51,11 @@ export function getAuthRedirectOrigin(): string {
     return win;
   }
 
-  return envCanonical ?? appConfig.appUrl.replace(/\/$/, "");
+  if (envCanonical && !envIsLocal) {
+    return envCanonical;
+  }
+
+  return vercelDeploymentOrigin() ?? appConfig.appUrl.replace(/\/$/, "");
 }
 
 export type AuthCallbackOptions = {
@@ -66,4 +79,12 @@ export function buildAuthCallbackUrl(opts?: AuthCallbackOptions): string {
   const base = `${origin}/auth/callback`;
   if (opts?.popup) return `${base}?popup=1`;
   return base;
+}
+
+/**
+ * `resetPasswordForEmail` redirect target. Supabase appends `?code=`.
+ * Add to Supabase → Authentication → Redirect URLs, e.g. `https://your-domain/auth/confirm-recovery**`
+ */
+export function buildPasswordRecoveryConfirmUrl(): string {
+  return `${getAuthRedirectOrigin()}/auth/confirm-recovery`;
 }
