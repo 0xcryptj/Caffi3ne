@@ -5,6 +5,8 @@ export type Profile = {
   updated_at: string;
   email: string | null;
   display_name: string | null;
+  /** HTTPS URL from OAuth (e.g. Google `picture`); add column via `supabase/profiles-schema.sql` migration. */
+  avatar_url?: string | null;
   username: string | null;
   onboarding_completed: boolean;
   home_city: string | null;

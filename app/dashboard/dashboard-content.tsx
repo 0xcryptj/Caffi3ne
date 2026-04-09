@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { navbarAccountInitial, navbarAccountLabel } from "@/lib/account-display";
+import { accountAvatarUrl, navbarAccountInitial, navbarAccountLabel } from "@/lib/account-display";
 import { useAuth } from "@/context/AuthProvider";
 import { DashboardSignOut } from "./sign-out-button";
 
 export function DashboardContent() {
   const { user, profile } = useAuth();
   if (!user) return null;
-  const src = user.user_metadata?.avatar_url as string | undefined;
+  const src = accountAvatarUrl(profile, user);
   const displayName = navbarAccountLabel(profile, user);
   const initial = navbarAccountInitial(profile, user);
 

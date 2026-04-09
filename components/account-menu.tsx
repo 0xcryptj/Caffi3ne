@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, LayoutDashboard, LogOut } from "lucide-react";
-import { accountEmailForMenu, navbarAccountInitial, navbarAccountLabel } from "@/lib/account-display";
+import {
+  accountAvatarUrl,
+  accountEmailForMenu,
+  navbarAccountInitial,
+  navbarAccountLabel
+} from "@/lib/account-display";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthProvider";
 
@@ -51,7 +56,7 @@ export function AccountMenu() {
   const label = navbarAccountLabel(profile, user);
   const initial = navbarAccountInitial(profile, user);
   const email = accountEmailForMenu(user);
-  const avatarUrl = user.user_metadata?.avatar_url as string | undefined;
+  const avatarUrl = accountAvatarUrl(profile, user);
 
   const rowClass = cn(
     "flex items-center gap-3 rounded-xl font-medium text-espresso-800 transition hover:bg-espresso-50 active:bg-espresso-50",

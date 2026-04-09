@@ -10,6 +10,7 @@ import {
   type ReactNode
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { oauthAvatarUrlFromUser } from "@/lib/account-display";
 import type { Profile } from "@/lib/types";
 import { createClient } from "@/utils/supabase/client";
 
@@ -39,15 +40,26 @@ export function AuthProvider({ children, initialSession, initialProfile }: AuthP
 
   const refreshProfile = useCallback(async () => {
     const uid = user?.id;
-    if (!uid) {
+    if (!uid || !user) {
       setProfile(null);
       return;
     }
     const { data, error } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
-    if (!error && data) {
-      setProfile(data as Profile);
+    if (error || !data) {
+      if (!error) setProfile(null);
+      return;
     }
-  }, [supabase, user?.id]);
+    let row = data as Profile;
+    const oauthUrl = oauthAvatarUrlFromUser(user);
+    if (oauthUrl && !row.avatar_url?.trim()) {
+      const { error: upErr } = await supabase
+        .from("profiles")
+        .update({ avatar_url: oauthUrl })
+        .eq("id", uid);
+      if (!upErr) row = { ...row, avatar_url: oauthUrl };
+    }
+    setProfile(row);
+  }, [supabase, user]);
 
   useEffect(() => {
     const {
