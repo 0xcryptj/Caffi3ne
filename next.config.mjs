@@ -1,6 +1,10 @@
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
-initOpenNextCloudflareForDev();
+// Only for local `next dev` with Wrangler. During `next build` (e.g. on Vercel) this would spawn
+// workerd from @cloudflare/workerd-linux-64, which requires GLIBC_2.35+ and breaks older CI images.
+if (process.env.NODE_ENV === "development") {
+  void initOpenNextCloudflareForDev();
+}
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
